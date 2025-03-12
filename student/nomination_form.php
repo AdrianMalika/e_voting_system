@@ -7,6 +7,14 @@ if (!isset($_SESSION['user_id']) || !in_array($user['role'], ['student', 'candid
     exit();
 }
 
+// Configuration for application period (this could be fetched from a database or config file)
+$applicationStart = strtotime("2024-01-01 00:00:00");
+$applicationEnd = strtotime("2024-01-15 23:59:59");
+$currentTimestamp = time();
+
+// Check if the current time is within the application period
+$isApplicationOpen = $currentTimestamp >= $applicationStart && $currentTimestamp <= $applicationEnd;
+
 // Function to validate file upload
 function validateFileUpload($file, $allowedTypes, $maxSize) {
     if ($file['error'] !== UPLOAD_ERR_OK) {
@@ -369,6 +377,7 @@ if (isset($_SESSION['success_message'])): ?>
                 <h1 class="display-4 fw-bold">Candidate Application</h1>
                 <p class="lead mb-0">Apply to become a candidate in the upcoming student elections</p>
                 <hr class="my-4 opacity-25">
+                <div id="countdown-timer" class="mb-3"></div>
                 <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#guidelinesModal">
                     <i class="fas fa-info-circle me-2"></i>
                     View Application Guidelines
@@ -384,138 +393,143 @@ if (isset($_SESSION['success_message'])): ?>
                 <div class="card-body p-4">
                     <h3 class="card-title mb-4 text-center">Candidate Information</h3>
                     <form method="POST" action="" class="needs-validation" novalidate enctype="multipart/form-data">
-                        <!-- Personal Information -->
-                        <div class="mb-4">
-                            <h5 class="text-custom-primary mb-3">
-                                <i class="fas fa-user me-2"></i>Personal Information
-                            </h5>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="first_name" class="form-label">First Name</label>
-                                    <input type="text" class="form-control" id="first_name" name="first_name" 
-                                        value="<?php echo isset($formData['first_name']) ? htmlspecialchars($formData['first_name']) : ''; ?>" 
-                                        required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="surname" class="form-label">Surname</label>
-                                    <input type="text" class="form-control" id="surname" name="surname" 
-                                        value="<?php echo isset($formData['surname']) ? htmlspecialchars($formData['surname']) : ''; ?>" 
-                                        required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="email" class="form-label">Email</label>
-                                    <input type="email" class="form-control" id="email" name="email" 
-                                        value="<?php echo isset($formData['email']) ? htmlspecialchars($formData['email']) : ''; ?>" 
-                                        required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="phone" class="form-label">Phone Number</label>
-                                    <input type="tel" class="form-control" id="phone" name="phone" 
-                                        value="<?php echo isset($formData['phone']) ? htmlspecialchars($formData['phone']) : ''; ?>" 
-                                        required>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Academic Information -->
-                        <div class="mb-4">
-                            <h5 class="text-custom-primary mb-3">
-                                <i class="fas fa-graduation-cap me-2"></i>Academic Information
-                            </h5>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="student_id" class="form-label">Student ID</label>
-                                    <input type="text" class="form-control" id="student_id" name="student_id" 
-                                        value="<?php echo isset($formData['student_id']) ? htmlspecialchars($formData['student_id']) : ''; ?>" 
-                                        required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="program" class="form-label">Program of Study</label>
-                                    <input type="text" class="form-control" id="program" name="program" 
-                                        value="<?php echo isset($formData['program']) ? htmlspecialchars($formData['program']) : ''; ?>" 
-                                        required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="year_of_study" class="form-label">Year of Study</label>
-                                    <select class="form-select" id="year_of_study" name="year_of_study" required>
-                                        <option value="">Select Year</option>
-                                        <option value="1">First Year</option>
-                                        <option value="2">Second Year</option>
-                                        <option value="3">Third Year</option>
-                                        <option value="4">Fourth Year</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="gpa" class="form-label">Current GPA</label>
-                                    <input type="number" step="0.01" class="form-control" id="gpa" name="gpa" 
-                                        value="<?php echo isset($formData['gpa']) ? htmlspecialchars($formData['gpa']) : ''; ?>" 
-                                        required>
+                        <!-- Disable form if application is closed -->
+                        <?php if (!$isApplicationOpen): ?>
+                            <div class="alert alert-danger">The application period is closed.</div>
+                        <?php else: ?>
+                            <!-- Personal Information -->
+                            <div class="mb-4">
+                                <h5 class="text-custom-primary mb-3">
+                                    <i class="fas fa-user me-2"></i>Personal Information
+                                </h5>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="first_name" class="form-label">First Name</label>
+                                        <input type="text" class="form-control" id="first_name" name="first_name" 
+                                            value="<?php echo isset($formData['first_name']) ? htmlspecialchars($formData['first_name']) : ''; ?>" 
+                                            required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="surname" class="form-label">Surname</label>
+                                        <input type="text" class="form-control" id="surname" name="surname" 
+                                            value="<?php echo isset($formData['surname']) ? htmlspecialchars($formData['surname']) : ''; ?>" 
+                                            required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="email" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="email" name="email" 
+                                            value="<?php echo isset($formData['email']) ? htmlspecialchars($formData['email']) : ''; ?>" 
+                                            required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="phone" class="form-label">Phone Number</label>
+                                        <input type="tel" class="form-control" id="phone" name="phone" 
+                                            value="<?php echo isset($formData['phone']) ? htmlspecialchars($formData['phone']) : ''; ?>" 
+                                            required>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Position Information -->
-                        <div class="mb-4">
-                            <h5 class="text-custom-primary mb-3">
-                                <i class="fas fa-briefcase me-2"></i>Position Information
-                            </h5>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="role" class="form-label">Position Applying For</label>
-                                    <select id="role" name="role" class="form-select" required>
-                                        <option value="">Select Position</option>
-                                        <option value="President">President</option>
-                                        <option value="Vice President">Vice President</option>
-                                        <option value="Secretary">Secretary</option>
-                                        <option value="Treasurer">Treasurer</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="branch" class="form-label">Campus Branch</label>
-                                    <select id="branch" name="branch" class="form-select" required>
-                                        <option value="">Select Branch</option>
-                                        <option value="Blantyre">Blantyre</option>
-                                        <option value="Lilongwe">Lilongwe</option>
-                                        <option value="Zomba">Zomba</option>
-                                    </select>
+                            <!-- Academic Information -->
+                            <div class="mb-4">
+                                <h5 class="text-custom-primary mb-3">
+                                    <i class="fas fa-graduation-cap me-2"></i>Academic Information
+                                </h5>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="student_id" class="form-label">Student ID</label>
+                                        <input type="text" class="form-control" id="student_id" name="student_id" 
+                                            value="<?php echo isset($formData['student_id']) ? htmlspecialchars($formData['student_id']) : ''; ?>" 
+                                            required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="program" class="form-label">Program of Study</label>
+                                        <input type="text" class="form-control" id="program" name="program" 
+                                            value="<?php echo isset($formData['program']) ? htmlspecialchars($formData['program']) : ''; ?>" 
+                                            required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="year_of_study" class="form-label">Year of Study</label>
+                                        <select class="form-select" id="year_of_study" name="year_of_study" required>
+                                            <option value="">Select Year</option>
+                                            <option value="1">First Year</option>
+                                            <option value="2">Second Year</option>
+                                            <option value="3">Third Year</option>
+                                            <option value="4">Fourth Year</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="gpa" class="form-label">Current GPA</label>
+                                        <input type="number" step="0.01" class="form-control" id="gpa" name="gpa" 
+                                            value="<?php echo isset($formData['gpa']) ? htmlspecialchars($formData['gpa']) : ''; ?>" 
+                                            required>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Required Documents -->
-                        <div class="mb-4">
-                            <h5 class="text-custom-primary mb-3">
-                                <i class="fas fa-file-upload me-2"></i>Required Documents
-                            </h5>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="profile_photo" class="form-label">Profile Photo</label>
-                                    <input type="file" class="form-control" id="profile_photo" name="profile_photo" accept="image/*" required>
+                            <!-- Position Information -->
+                            <div class="mb-4">
+                                <h5 class="text-custom-primary mb-3">
+                                    <i class="fas fa-briefcase me-2"></i>Position Information
+                                </h5>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="role" class="form-label">Position Applying For</label>
+                                        <select id="role" name="role" class="form-select" required>
+                                            <option value="">Select Position</option>
+                                            <option value="President">President</option>
+                                            <option value="Vice President">Vice President</option>
+                                            <option value="Secretary">Secretary</option>
+                                            <option value="Treasurer">Treasurer</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="branch" class="form-label">Campus Branch</label>
+                                        <select id="branch" name="branch" class="form-select" required>
+                                            <option value="">Select Branch</option>
+                                            <option value="Blantyre">Blantyre</option>
+                                            <option value="Lilongwe">Lilongwe</option>
+                                            <option value="Zomba">Zomba</option>
+                                        </select>
+                                    </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <label for="transcript" class="form-label">Academic Transcript</label>
-                                    <input type="file" class="form-control" id="transcript" name="transcript" accept=".pdf,.doc,.docx" required>
+                            </div>
+
+                            <!-- Required Documents -->
+                            <div class="mb-4">
+                                <h5 class="text-custom-primary mb-3">
+                                    <i class="fas fa-file-upload me-2"></i>Required Documents
+                                </h5>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="profile_photo" class="form-label">Profile Photo</label>
+                                        <input type="file" class="form-control" id="profile_photo" name="profile_photo" accept="image/*" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="transcript" class="form-label">Academic Transcript</label>
+                                        <input type="file" class="form-control" id="transcript" name="transcript" accept=".pdf,.doc,.docx" required>
+                                    </div>
+                               
                                 </div>
-                           
                             </div>
-                        </div>
 
-                        <!-- Declaration -->
-                        <div class="mb-4">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="declaration" required>
-                                <label class="form-check-label" for="declaration">
-                                    I declare that all information provided is true and accurate. I understand that any false information may result in disqualification.
-                                </label>
+                            <!-- Declaration -->
+                            <div class="mb-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="declaration" required>
+                                    <label class="form-check-label" for="declaration">
+                                        I declare that all information provided is true and accurate. I understand that any false information may result in disqualification.
+                                    </label>
+                                </div>
                             </div>
-                        </div>
 
-                        <!-- Submit Button -->
-                        <div class="col-12">
-                            <button type="submit" class="btn btn-custom-primary w-100 py-3">
-                                <i class="fas fa-paper-plane me-2"></i>Submit Application
-                            </button>
-                        </div>
+                            <!-- Submit Button -->
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-custom-primary w-100 py-3">
+                                    <i class="fas fa-paper-plane me-2"></i>Submit Application
+                                </button>
+                            </div>
+                        <?php endif; ?>
                     </form>
                 </div>
             </div>
@@ -684,6 +698,34 @@ if (isset($_SESSION['success_message'])): ?>
 </style>
 
 <script>
+// JavaScript to handle the countdown timer
+document.addEventListener('DOMContentLoaded', function() {
+    const applicationEnd = new Date(<?php echo $applicationEnd * 1000; ?>); // Convert to milliseconds
+    const countdownElement = document.getElementById('countdown-timer');
+
+    function updateCountdown() {
+        const now = new Date();
+        const timeRemaining = applicationEnd - now;
+
+        if (timeRemaining <= 0) {
+            countdownElement.textContent = "Application period has ended.";
+            document.querySelector('form').querySelectorAll('input, select, button').forEach(function(element) {
+                element.disabled = true;
+            });
+        } else {
+            const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+
+            countdownElement.textContent = `Time remaining: ${days}d ${hours}h ${minutes}m ${seconds}s`;
+        }
+    }
+
+    setInterval(updateCountdown, 1000);
+    updateCountdown();
+});
+
 // Form submission confirmation
 document.querySelector('form').addEventListener('submit', function(e) {
     if (!confirm('Are you sure you want to submit your candidate application?')) {
