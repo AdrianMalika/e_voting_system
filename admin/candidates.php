@@ -3,6 +3,9 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
+// Set the default timezone to your local timezone
+date_default_timezone_set('Africa/Blantyre');
+
 require_once '../includes/header.php'; // This file should already call session_start()
 
 // Ensure user is admin
@@ -72,10 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
 // Handle setting application period (only the end date)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_period'])) {
-    error_log("Form submitted for setting application period."); // Debug log
-
-    // Print out the POST array for debugging (temporarily)
-    // echo "<pre>" . print_r($_POST, true) . "</pre>";
+    error_log("Form submitted for setting application period.");
 
     // Replace "T" with a space so that strtotime can correctly parse the datetime-local value
     $input = str_replace("T", " ", $_POST['application_end']);
@@ -168,13 +168,7 @@ $applicationEnd = $applicationPeriod['end'];
     </div>
 
     <!-- Countdown Timer -->
-    <div id="countdown-timer" class="alert alert-info mt-4">
-        <?php if ($applicationEnd <= 0): ?>
-            Application period is not set.
-        <?php else: ?>
-            <strong>Time Remaining:</strong> <span id="timer-text"></span>
-        <?php endif; ?>
-    </div>
+    <div id="countdown-timer" class="alert alert-info mt-4"></div>
 
     <?php if (isset($_SESSION['success'])): ?>
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -331,39 +325,33 @@ document.addEventListener('DOMContentLoaded', function() {
     // Convert PHP Unix timestamp (in seconds) to milliseconds
     const applicationEndTimestamp = <?php echo $applicationEnd * 1000; ?>;
     const countdownElement = document.getElementById('countdown-timer');
-    const timerText = document.getElementById('timer-text');
+    
+    if (applicationEndTimestamp <= 0) {
+        countdownElement.textContent = "Application period is not set.";
+        return;
+    }
     
     function updateCountdown() {
         const now = new Date().getTime();
         const timeRemaining = applicationEndTimestamp - now;
         
         if (timeRemaining <= 0) {
+            countdownElement.textContent = "Application period has ended.";
             countdownElement.classList.remove("alert-info");
             countdownElement.classList.add("alert-danger");
-            countdownElement.innerHTML = "<strong>Application period has ended.</strong>";
-            
-            // Disable the nomination form if it exists
-            const form = document.querySelector('form');
-            if (form) {
-                form.querySelectorAll('input, select, button, textarea').forEach(element => {
-                    element.disabled = true;
-                });
-                form.style.opacity = '0.7';
-            }
+            clearInterval(intervalId);
         } else {
             const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
             const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
     
-            timerText.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+            countdownElement.textContent = `Time remaining: ${days}d ${hours}h ${minutes}m ${seconds}s`;
         }
     }
     
-    if (applicationEndTimestamp > 0) {
-        updateCountdown();
-        setInterval(updateCountdown, 1000);
-    }
+    updateCountdown();
+    const intervalId = setInterval(updateCountdown, 1000);
 });
 </script>
 

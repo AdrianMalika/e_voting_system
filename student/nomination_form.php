@@ -572,10 +572,26 @@ if (isset($_SESSION['success_message'])): ?>
                             <i class="fas fa-calendar-alt me-2"></i>Important Dates
                         </h6>
                         <ul class="list-group list-group-flush">
-                            <li class="list-group-item">Application Opening: January 1, 2024</li>
-                            <li class="list-group-item">Application Deadline: January 15, 2024</li>
-                            <li class="list-group-item">Campaign Period: January 20-30, 2024</li>
-                            <li class="list-group-item">Election Day: February 1, 2024</li>
+                            <li class="list-group-item">
+                                <i class="fas fa-hourglass-end me-2 text-warning"></i>
+                                <strong>Application Deadline:</strong> 
+                                <?php echo $applicationEnd > 0 ? date('F j, Y \a\t g:i A', $applicationEnd) : 'To be announced'; ?>
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-info-circle me-2 text-info"></i>
+                                <strong>Requirements:</strong> 
+                                Must be a currently enrolled student with good academic standing
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-exclamation-circle me-2 text-danger"></i>
+                                <strong>Important Note:</strong> 
+                                All required documents must be submitted before the deadline
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle me-2 text-success"></i>
+                                <strong>Next Steps:</strong> 
+                                Candidates will be notified of their application status within 48 hours
+                            </li>
                         </ul>
                     </div>
 
