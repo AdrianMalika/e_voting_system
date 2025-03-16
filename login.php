@@ -86,11 +86,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         body {
-            background: #f8f9fa;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            min-height: 100vh;
         }
         .login-container {
             max-width: 400px;
             margin: 50px auto;
+            animation: slideDown 0.5s ease-out;
         }
         .role-selector {
             display: flex;
@@ -104,22 +106,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 15px;
             border-radius: 10px;
             transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
         }
-        .role-option:hover, .role-option.active {
-            background: #e9ecef;
+        .role-option:hover {
+            transform: translateY(-3px);
+            background: #fff;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .role-option.active {
+            background: #3498db;
+            color: white;
+        }
+        .role-option.active i {
+            color: white !important;
         }
         .role-option i {
             font-size: 24px;
             margin-bottom: 10px;
             color: #3498db;
+            transition: all 0.3s;
         }
         .card {
             border: none;
             border-radius: 15px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
         }
         .card-header {
-            background: #3498db;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
             color: white;
             border-radius: 15px 15px 0 0 !important;
             padding: 20px;
@@ -128,16 +147,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             background: #3498db;
             border: none;
             padding: 12px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
         }
         .btn-primary:hover {
             background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+        .btn-primary:active {
+            transform: translateY(0);
         }
         .home-icon {
             position: absolute;
             top: 20px;
             right: 20px;
-            color: #3498db;
-            font-size: 24px;
+            transition: all 0.3s;
+        }
+        .home-icon:hover {
+            transform: scale(1.2);
+        }
+        .form-control {
+            border-radius: 8px;
+            padding: 12px;
+            transition: all 0.3s;
+        }
+        .form-control:focus {
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.25);
+            transform: translateY(-2px);
+        }
+
+        /* Animations */
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .alert {
+            animation: slideDown 0.5s ease-out;
+            border-radius: 10px;
         }
     </style>
 </head>
@@ -147,7 +206,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="text-center mb-4">
                 <h2 style="display: inline;">E-Voting System</h2>
                 <div class="home-icon">
-                    <a href="index.php" class="text-decoration-none" onclick="return confirm('Are you sure you want to go back to the home page?');">
+                    <a href="index.php" class="text-decoration-none" onclick="return confirmExit();">
                         <i class="fas fa-home"></i>
                     </a>
                 </div>
@@ -199,12 +258,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <button type="submit" class="btn btn-primary w-100 mb-3">
                             <i class="fas fa-sign-in-alt me-2"></i>Login
                         </button>
-                        
-                        <div class="text-center">
-                            <p class="mb-0">Don't have an account? 
-                                <a href="register.php" class="text-decoration-none">Register here</a>
-                            </p>
-                        </div>
                     </form>
                 </div>
             </div>
@@ -213,12 +266,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        function selectRole(role) {
-            document.querySelectorAll('.role-option').forEach(option => {
-                option.classList.remove('active');
+        document.addEventListener('DOMContentLoaded', function() {
+            // Role selection animation
+            function selectRole(role) {
+                document.querySelectorAll('.role-option').forEach(option => {
+                    option.classList.remove('active');
+                });
+                event.currentTarget.classList.add('active');
+                
+                // Add pulse animation
+                event.currentTarget.style.animation = 'pulse 0.3s';
+                setTimeout(() => {
+                    event.currentTarget.style.animation = '';
+                }, 300);
+                
+            }
+
+            // Add hover effect to form inputs
+            document.querySelectorAll('.form-control').forEach(input => {
+                input.addEventListener('focus', function() {
+                    this.closest('.mb-3').style.transform = 'translateY(-2px)';
+                });
+                input.addEventListener('blur', function() {
+                    this.closest('.mb-3').style.transform = 'translateY(0)';
+                });
             });
-            event.currentTarget.classList.add('active');
-            
+
+            // Add loading state to submit button
+            document.querySelector('form').addEventListener('submit', function() {
+                const button = this.querySelector('button[type="submit"]');
+                button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Logging in...';
+                button.disabled = true;
+            });
+
+            // Make role options clickable
+            document.querySelectorAll('.role-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    selectRole(this.querySelector('div').textContent.toLowerCase());
+                });
+            });
+        });
+
+        // Confirm dialog animation
+        function confirmExit() {
+            if(confirm('Are you sure you want to go back to the home page?')) {
+                document.body.style.opacity = '0';
+                setTimeout(() => {
+                    window.location.href = 'index.php';
+                }, 300);
+            }
+            return false;
         }
     </script>
 </body>
