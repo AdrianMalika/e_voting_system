@@ -200,10 +200,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <i class="fas fa-sign-in-alt me-2"></i>Login
                         </button>
                         
-                        <div class="text-center">
-                            <p class="mb-0">Don't have an account? 
-                                <a href="register.php" class="text-decoration-none">Register here</a>
-                            </p>
                         </div>
                     </form>
                 </div>
