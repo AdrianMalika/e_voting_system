@@ -1,7 +1,7 @@
 <?php
 session_start();
 require_once 'config/database.php';
-
+// login
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
     $password = $_POST['password'];
