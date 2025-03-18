@@ -1,7 +1,7 @@
 <?php
 session_start();
 require_once 'config/database.php';
-// login
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
     $password = $_POST['password'];
@@ -30,6 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 "Candidate account not yet approved",
                 $_SERVER['REMOTE_ADDR']
             ]);
+            
         } else {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['role'] = $user['role'];
@@ -79,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Login - E-Voting System</title>
     <link rel="icon" href="https://mchs.mw/img/mchs_logo.png" type="image/png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -106,6 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             max-height: 480px;
             margin: 20px auto;
             display: flex;
+            flex-direction: row;
             box-shadow: 0 15px 30px rgba(0,0,0,0.1);
             border-radius: 20px;
             overflow: hidden;
@@ -115,11 +117,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         .login-image {
             flex: 0.9;
-            background: rgb(0, 32, 63); /* Dense blue background */
-            padding: 15px 20px;
+            background: rgb(0, 32, 63);
+            padding: 5px 20px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start;
             align-items: center;
             position: relative;
             overflow: hidden;
@@ -128,7 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .login-image h2 {
             color: white;
             font-weight: 600;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
             text-shadow: 0 2px 4px rgba(0,0,0,0.1);
             text-align: center;
             font-size: 1.45rem;
@@ -136,25 +138,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         .login-image .institution-name {
             color: rgba(255, 255, 255, 0.95);
-            font-size: 1rem;
-            margin-bottom: 15px;
+            font-size: 1.2rem;
+            margin-bottom: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
+            margin-top: 120px;
         }
 
         .welcome-features {
-            margin-top: 5px;
+            margin-top: 20px;
         }
 
         .feature-item {
             color: rgba(255, 255, 255, 0.9);
-            margin: 3px 0;
-            padding: 4px 10px;
+            margin: 8px 0;
+            padding: 2px 10px;
             display: flex;
             align-items: center;
             gap: 10px;
-            font-size: 0.88rem;
+            font-size: 1rem;
         }
 
         .feature-item i {
@@ -202,22 +205,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         @media (max-width: 768px) {
             .login-container {
-                flex-direction: column;
-                max-width: 100%;
+                flex-direction: column !important;
                 max-height: none;
                 margin: 10px;
-                border-radius: 15px;
             }
 
             .login-image {
-                padding: 15px;
+                order: -1 !important;
+                width: 100%;
                 border-radius: 15px 15px 0 0;
+                padding: 10px;
+                max-height: 420px;
+            }
+
+            .login-form {
+                order: 2 !important;
+                width: 100%;
+                border-radius: 0 0 15px 15px;
+                padding: 15px;
             }
 
             .logo-container {
-                width: 90px;
-                height: 90px;
-                margin-bottom: 10px;
+                width: 65px;
+                height: 65px;
+                margin-bottom: 8px;
+                align-self: flex-start;
+                margin-left: 35px;
             }
 
             .login-image h2 {
@@ -225,13 +238,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 margin-bottom: 5px;
             }
 
-            .institution-name {
-                font-size: 0.9rem;
-                margin-bottom: 10px;
+            .institution-name, .welcome-features {
+                align-self: center;
             }
 
             .feature-item {
-                font-size: 0.8rem;
+                font-size: 0.95rem;
                 padding: 4px 8px;
                 margin: 4px 0;
             }
@@ -312,8 +324,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             .logo-container {
-                width: 80px;
-                height: 80px;
+                width: 50px;
+                height: 50px;
             }
 
             .login-image h2 {
@@ -321,11 +333,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             .institution-name {
-                font-size: 0.8rem;
+                font-size: 1rem;
             }
 
             .feature-item {
-                font-size: 0.75rem;
+                font-size: 0.9rem;
                 padding: 3px 6px;
             }
 
@@ -396,8 +408,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             .logo-container {
-                width: 70px;
-                height: 70px;
+                width: 45px;
+                height: 45px;
+                margin-left: 15px;
             }
 
             .login-image h2 {
@@ -536,30 +549,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-size: 0.87rem;
         }
 
+        /* Updated Input Group Styling */
         .input-group {
             position: relative;
-            margin-bottom: 12px;
+            margin-bottom: 25px;
             width: 100%;
-        }
-
-        .input-group input {
-            width: 100%;
-            font-size: 0.9rem;
         }
 
         .form-control {
-            border-radius: 10px;
-            padding: 9px 12px;
+            height: 45px;
+            font-size: 1rem;
+            padding: 8px 20px 8px 45px;
+            border-radius: 12px;
             border: 2px solid #eee;
             transition: all 0.3s;
             background: #f8f9fa;
             width: 100%;
-            color: #333;
-        }
-
-        .form-control:focus {
-            background: white;
-            border-color: var(--primary-color);
             color: #333;
         }
 
@@ -568,21 +573,72 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             left: 15px;
             top: 50%;
             transform: translateY(-50%);
-            background: white;
-            padding: 0 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.1rem;
             color: #666;
             transition: all 0.3s;
             pointer-events: none;
-            font-size: 0.9rem;
+            padding: 0 5px;
+            background: transparent;
         }
 
+        .input-group label i {
+            font-size: 1rem;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        /* Active/Focus State */
         .input-group input:focus + label,
         .input-group input:not(:placeholder-shown) + label {
             top: 0;
-            font-size: 12px;
+            font-size: 0.85rem;
             color: var(--primary-color);
             transform: translateY(-50%) scale(0.9);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: white;
+            left: 12px;
+        }
+
+        .input-group input:focus + label i,
+        .input-group input:not(:placeholder-shown) + label i {
+            color: var(--primary-color);
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .form-control {
+                height: 50px;
+                font-size: 1rem;
+                padding: 10px 15px 10px 40px;
+            }
+            
+            .input-group label {
+                font-size: 1rem;
+                left: 12px;
+            }
+            
+            .input-group label i {
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .form-control {
+                height: 48px;
+                font-size: 16px; /* Prevent zoom on iOS */
+                padding: 10px 12px 10px 35px;
+            }
+            
+            .input-group label {
+                font-size: 0.95rem;
+                left: 10px;
+            }
+            
+            .input-group label i {
+                font-size: 0.85rem;
+            }
         }
 
         .button-wrapper {
@@ -592,10 +648,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .btn-primary {
-            width: 90% !important;
-            background: rgb(0, 32, 63) !important; /* Dense blue background */
+            width: 100% !important;
+            background: rgb(0, 32, 63) !important;
             border: none;
-            padding: 10px;
+            padding: 15px;
             border-radius: 10px;
             font-weight: 600;
             text-transform: uppercase;
@@ -603,13 +659,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             position: relative;
             overflow: hidden;
             transition: all 0.3s;
-            margin-top: 20px;
+            margin-top: 25px;
+            font-size: 0.95rem;
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px) scale(1.02);
+            transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(2, 71, 49, 0.3);
-            width: 92% !important;
         }
 
         .loading-spinner {
@@ -727,21 +783,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .logo-container {
-            width: 180px;
-            height: 180px;
-            position: relative;
-            margin-bottom: 15px;
+            width: 65px;  /* Increased from 55px */
+            height: 65px;
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            margin: 0;
             perspective: 1000px;
         }
 
         .animated-logo {
-            width: 100%;
-            height: 100%;
+            width: 65px !important;  /* Increased from 55px */
+            height: 65px !important;
             object-fit: contain;
-            animation: logoAnimation 8s infinite ease-in-out;
-            position: relative;
-            background: transparent;
-            padding: 15px;
+            padding: 4px;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
 
         @keyframes logoAnimation {
@@ -883,6 +940,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             color: var(--secondary-color);
         }
 
+        .home-icon-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            background: white;
+        }
+
+        .home-icon-link:hover i {
+            transform: scale(1.1);
+            color: var(--secondary-color);
+        }
+
         @media (max-width: 768px) {
             .home-icon-link {
                 top: 10px;
@@ -980,6 +1048,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .institution-name {
             position: relative;
             padding-bottom: 10px;
+            margin-top: 60px;
         }
 
         .institution-name::after {
@@ -1014,7 +1083,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             .institution-name {
-                font-size: 1rem;
+                font-size: 1.1rem;
+                margin-top: 45px;
             }
 
             h2.animated-text {
@@ -1352,11 +1422,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         /* Update only the login-image section */
         .login-image {
             flex: 0.9;
-            background: rgb(0, 32, 63); /* Dense blue background */
-            padding: 18px 20px;
+            background: rgb(0, 32, 63);
+            padding: 5px 20px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start;
             align-items: center;
             position: relative;
             overflow: hidden;
@@ -1384,6 +1454,268 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .moving-object.plus {
             color: rgba(255, 255, 255, 0.6);
         }
+
+        /* Responsive Media Queries */
+        @media (max-width: 1200px) {
+            .login-container {
+                max-width: 90%;
+            }
+            .login-image {
+                flex: 0.8;
+                padding: 15px;
+            }
+            .logo-container {
+                width: 60px;  /* Increased from 50px */
+                height: 60px;
+            }
+            .login-image h2 {
+                font-size: 1.2rem;
+            }
+            .institution-name {
+                font-size: 0.95rem;
+            }
+            .feature-item {
+                font-size: 0.85rem;
+            }
+            .feature-item i {
+                width: 24px;
+                height: 24px;
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .login-container {
+                max-width: 95%;
+            }
+            .login-image {
+                flex: 0.7;
+                padding: 12px;
+                max-height: 400px;
+            }
+            .logo-container {
+                width: 58px;  /* Increased from 48px */
+                height: 58px;
+            }
+            .welcome-features {
+                margin-top: 10px;
+            }
+            .login-image h2 {
+                font-size: 1.3rem;
+                margin-bottom: 8px;
+            }
+            .institution-name {
+                font-size: 1rem;
+                margin-bottom: 10px;
+            }
+            .feature-item {
+                font-size: 0.9rem;
+                margin: 4px 0;
+            }
+            .feature-item i {
+                width: 26px;
+                height: 26px;
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .login-image {
+                flex: 0.6;
+                padding: 8px;
+                max-height: 320px;
+            }
+            .logo-container {
+                width: 55px;  /* Increased from 45px */
+                height: 55px;
+                top: 10px;
+                left: 10px;
+            }
+            .login-image h2 {
+                font-size: 1.2rem;
+                margin-bottom: 5px;
+            }
+            .institution-name {
+                font-size: 1.1rem;
+                margin-bottom: 5px;
+            }
+            .welcome-features {
+                margin-top: 5px;
+            }
+            .feature-item {
+                font-size: 0.95rem;
+                margin: 2px 0;
+                padding: 3px 8px;
+            }
+            .feature-item i {
+                width: 20px;
+                height: 20px;
+                font-size: 0.75rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .login-image {
+                flex: 0.5;
+                padding: 5px;
+                max-height: 380px;
+            }
+            .logo-container {
+                width: 52px;  /* Increased from 42px */
+                height: 52px;
+                top: 8px;
+                left: 8px;
+            }
+            .login-image h2 {
+                font-size: 1.1rem;
+                margin-bottom: 3px;
+            }
+            .institution-name {
+                font-size: 1rem;
+                margin-bottom: 3px;
+            }
+            .welcome-features {
+                margin-top: 3px;
+            }
+            .feature-item {
+                font-size: 0.9rem;
+                margin: 1px 0;
+                padding: 2px 6px;
+            }
+            .feature-item i {
+                width: 18px;
+                height: 18px;
+                font-size: 0.7rem;
+            }
+        }
+
+        @media (max-width: 320px) {
+            .login-image {
+                padding: 3px;
+                max-height: 340px;
+            }
+            .logo-container {
+                width: 45px;
+                height: 45px;
+                top: 5px;
+                left: 5px;
+            }
+            .login-image h2 {
+                font-size: 1rem;
+                margin-bottom: 2px;
+            }
+            .institution-name {
+                font-size: 0.75rem;
+                margin-bottom: 2px;
+            }
+            .feature-item {
+                font-size: 0.7rem;
+                margin: 1px 0;
+                padding: 2px 5px;
+            }
+            .feature-item i {
+                width: 16px;
+                height: 16px;
+                font-size: 0.65rem;
+            }
+        }
+
+        /* Portrait and Landscape Orientations */
+        @media (orientation: landscape) and (max-height: 600px) {
+            .login-image {
+                max-height: 320px;
+                padding: 6px;
+            }
+            .logo-container {
+                width: 70px;
+                height: 70px;
+                margin-bottom: 5px;
+            }
+            .welcome-features {
+                margin-top: 5px;
+            }
+            .feature-item {
+                padding: 2px 5px;
+                margin: 1px 0;
+            }
+            .login-image h2 {
+                font-size: 1.5rem;
+            }
+            .institution-name {
+                font-size: 1.1rem;
+            }
+            .feature-item {
+                font-size: 1rem;
+            }
+        }
+
+        /* High-resolution Displays */
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            .animated-logo {
+                image-rendering: -webkit-optimize-contrast;
+            }
+        }
+
+        /* Dark Mode Support */
+        @media (prefers-color-scheme: dark) {
+            .form-control {
+                background-color: rgba(255, 255, 255, 0.05);
+                color: #fff;
+            }
+            .input-group-text {
+                background-color: rgba(255, 255, 255, 0.1);
+                border-color: rgba(255, 255, 255, 0.2);
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            .login-container {
+                box-shadow: none;
+            }
+            .btn-primary,
+            .forgot-password-link,
+            .home-icon-link {
+                display: none;
+            }
+        }
+
+        /* Slightly reduced logo sizes */
+        @media (max-width: 1200px) {
+            .login-image img {
+                width: 110px;
+                height: 110px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .login-image img {
+                width: 125px;
+                height: 125px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .login-image img {
+                width: 140px;
+                height: 140px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .login-image img {
+                width: 155px;
+                height: 155px;
+            }
+        }
+
+        /* Landscape mode adjustment */
+        @media (orientation: landscape) and (max-height: 600px) {
+            .login-image img {
+                width: 120px;
+                height: 120px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1397,7 +1729,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="logo-container">
                     <img src="includes/image/favicon.png" alt="Logo" class="animated-logo">
                 </div>
-                <h2 class="mt-4 animated-text">Welcome to MCHS</h2>
                 <p class="text-center institution-name animated-text-delay-1">
                     <i class="fas fa-university me-2"></i>
                     Malawi College of Health Sciences
@@ -1475,27 +1806,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
 
-                <form method="POST" action="login.php" id="loginForm">
-                    <div class="input-group">
-                        <input type="email" class="form-control" name="email" required placeholder=" ">
-                        <label><i class="fas fa-envelope me-2"></i>Email</label>
+                <form method="POST" action="login.php" id="loginForm" class="px-2">
+                    <div class="input-group input-group-sm mb-3">
+                        <span class="input-group-text bg-light border-end-0 py-2">
+                            <i class="fas fa-envelope text-muted" style="font-size: 1.1rem;"></i>
+                        </span>
+                        <input type="email" 
+                               class="form-control form-control-sm border-start-0 py-2" 
+                               name="email" 
+                               required 
+                               placeholder="Email">
                     </div>
                     
-                    <div class="input-group">
-                        <input type="password" class="form-control" name="password" required placeholder=" ">
-                        <label><i class="fas fa-lock me-2"></i>Password</label>
+                    <div class="input-group input-group-sm mb-3">
+                        <span class="input-group-text bg-light border-end-0 py-2">
+                            <i class="fas fa-lock text-muted" style="font-size: 1.1rem;"></i>
+                        </span>
+                        <input type="password" 
+                               class="form-control form-control-sm border-start-0 py-2" 
+                               name="password" 
+                               required 
+                               placeholder="Password">
                     </div>
                     
                     <div class="forgot-password-wrapper">
-                        <a href="forgot-password.php" class="forgot-password-link" onclick="return confirm('Are you sure you want to reset your password?');">
+                        <a href="forgot-password.php" class="btn btn-link btn-sm p-0 text-decoration-none small" onclick="return confirm('Are you sure you want to reset your password?');">
                             <i class="fas fa-key"></i>
                             Forgot Password?
                         </a>
                     </div>
                     
-                    <div class="button-wrapper">
-                        <button type="submit" class="btn btn-primary w-100" id="loginButton">
-                            <span class="loading-spinner"></span>
+                    <div class="d-grid gap-2 mt-3">
+                        <button type="submit" class="btn btn-primary py-2 fs-5 fw-semibold" id="loginButton">
+                            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                             <i class="fas fa-sign-in-alt me-2"></i>Login
                         </button>
                     </div>
@@ -1516,9 +1859,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Form submission animation
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             const button = document.getElementById('loginButton');
-            const spinner = button.querySelector('.loading-spinner');
+            const spinner = button.querySelector('.spinner-border');
             button.disabled = true;
-            spinner.style.display = 'inline-block';
+            spinner.classList.remove('d-none');
         });
 
         // Floating labels animation
