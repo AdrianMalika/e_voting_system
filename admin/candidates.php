@@ -110,14 +110,11 @@ $stmt = $conn->prepare("
     SELECT n.*,
            u.name as user_name, 
            u.email as user_email,
-           photo.file_path as photo_path,
-           trans.file_path as transcript_path
+           photo.file_path as photo_path
     FROM nominations n
     JOIN users u ON n.user_id = u.id
     LEFT JOIN nomination_documents photo ON n.nomination_id = photo.nomination_id 
         AND photo.document_type = 'photo'
-    LEFT JOIN nomination_documents trans ON n.nomination_id = trans.nomination_id 
-        AND trans.document_type = 'transcript'
     ORDER BY n.submission_date DESC
 ");
 $stmt->execute();
@@ -202,7 +199,7 @@ $applicationEnd = $applicationPeriod['end'];
                         <th>Personal Details</th>
                         <th>Academic Info</th>
                         <th>Position Details</th>
-                        <th>Documents</th>
+                        <th>Manifesto</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
@@ -234,32 +231,39 @@ $applicationEnd = $applicationPeriod['end'];
                             <td>
                                 <strong>Student ID:</strong> <?php echo htmlspecialchars($nomination['student_id']); ?><br>
                                 <strong>Program:</strong> <?php echo htmlspecialchars($nomination['program']); ?><br>
-                                <strong>Year:</strong> <?php echo htmlspecialchars($nomination['year_of_study']); ?><br>
-                                <strong>GPA:</strong> <?php echo htmlspecialchars($nomination['gpa']); ?>
+                                <strong>Year:</strong> <?php echo htmlspecialchars($nomination['year_of_study']); ?>
                             </td>
                             <td>
                                 <strong>Role:</strong> <?php echo htmlspecialchars($nomination['role']); ?><br>
                                 <strong>Branch:</strong> <?php echo htmlspecialchars($nomination['branch']); ?>
                             </td>
                             <td>
-                                <?php if (!empty($nomination['transcript_path'])): ?>
-                                    <a href="/e_voting_system/uploads/academic_transcripts/<?php echo basename($nomination['transcript_path']); ?>" 
-                                       class="btn btn-sm btn-outline-primary mb-2" 
-                                       target="_blank">
-                                        <i class="fas fa-file-alt me-1"></i>View Transcript
-                                    </a>
-                                <?php else: ?>
-                                    <span class="text-muted small">No transcript uploaded</span>
-                                <?php endif; ?>
+                                <button type="button" class="btn btn-sm btn-outline-primary" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#manifestoModal<?php echo $nomination['nomination_id']; ?>">
+                                    <i class="fas fa-file-alt me-1"></i>View Manifesto
+                                </button>
 
-                                <!-- Debug Information (remove in production) -->
-                                <?php if (isset($_SESSION['debug']) && $_SESSION['debug']): ?>
-                                    <div class="small text-muted mt-2">
-                                        <strong>Debug Info:</strong><br>
-                                        Photo Path: <?php echo htmlspecialchars($nomination['photo_path']); ?><br>
-                                        Transcript Path: <?php echo htmlspecialchars($nomination['transcript_path']); ?>
+                                <!-- Manifesto Modal -->
+                                <div class="modal fade" id="manifestoModal<?php echo $nomination['nomination_id']; ?>" tabindex="-1">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Candidate Manifesto</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p class="text-muted mb-2">
+                                                    <strong>Candidate:</strong> 
+                                                    <?php echo htmlspecialchars($nomination['first_name'] . ' ' . $nomination['surname']); ?>
+                                                </p>
+                                                <div class="bg-light p-3 rounded">
+                                                    <?php echo nl2br(htmlspecialchars($nomination['manifesto'])); ?>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                <?php endif; ?>
+                                </div>
                             </td>
                             <td>
                                 <?php 

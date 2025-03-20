@@ -76,23 +76,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Get all elections with their details
 $stmt = $conn->prepare("
-    SELECT e.*, 
-           COUNT(DISTINCT v.id) as total_votes,
-           COUNT(DISTINCT ec.candidate_id) as total_candidates,
-           (
-               SELECT COUNT(*) 
-               FROM election_candidates ec2 
-               WHERE ec2.election_id = e.id 
-               AND ec2.status = 'pending'
-           ) as pending_requests,
-           CASE 
-               WHEN e.status = 'active' THEN 'active'
-               WHEN e.status = 'completed' THEN 'completed'
-               ELSE 'upcoming'
-           END as display_status
+    SELECT 
+        e.*,
+        COUNT(DISTINCT v.id) as total_votes,
+        (
+            SELECT COUNT(*) 
+            FROM election_candidates ec 
+            WHERE ec.election_id = e.id 
+            AND ec.status = 'approved'
+        ) as approved_candidates,
+        (
+            SELECT COUNT(*) 
+            FROM election_candidates ec 
+            WHERE ec.election_id = e.id 
+            AND ec.status = 'pending'
+        ) as pending_candidates,
+        CASE 
+            WHEN NOW() BETWEEN e.start_date AND e.end_date THEN 'active'
+            WHEN NOW() > e.end_date THEN 'completed'
+            ELSE 'upcoming'
+        END as display_status
     FROM elections e
     LEFT JOIN votes v ON e.id = v.election_id
-    LEFT JOIN election_candidates ec ON e.id = ec.election_id
     GROUP BY e.id
     ORDER BY e.start_date ASC
 ");
@@ -129,200 +134,152 @@ if (isset($_GET['view_requests']) && is_numeric($_GET['view_requests'])) {
 </head>
 <body>
     <div class="container py-4">
+        <!-- Dashboard Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h2 class="mb-1">Election Dashboard</h2>
+                                <p class="mb-0">Manage and monitor all elections</p>
+                            </div>
+                            <a href="add_election.php" class="btn btn-light">
+                                <i class="fas fa-plus me-2"></i>Create Election
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alert Messages -->
         <?php if (isset($_SESSION['success'])): ?>
             <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <?php 
-                    echo $_SESSION['success'];
-                    unset($_SESSION['success']);
-                ?>
+                <i class="fas fa-check-circle me-2"></i><?php echo $_SESSION['success']; unset($_SESSION['success']); ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php endif; ?>
 
         <?php if (isset($_SESSION['error'])): ?>
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <?php 
-                    echo $_SESSION['error'];
-                    unset($_SESSION['error']);
-                ?>
+                <i class="fas fa-exclamation-circle me-2"></i><?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php endif; ?>
 
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Manage Elections</h2>
-            <a href="add_election.php" class="btn btn-primary">
-                <i class="fas fa-plus me-2"></i>Add New Election
-            </a>
-        </div>
+        <!-- Elections Grid -->
+        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+65            <?php foreach ($elections as $election): ?>
+                <div class="col">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <!-- Status Badge -->
+                            <?php
+                            $statusClass = match($election['display_status']) {
+                                'active' => 'success',
+                                'completed' => 'secondary',
+                                default => 'warning'
+                            };
+                            ?>
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <h5 class="card-title mb-0"><?php echo htmlspecialchars($election['title']); ?></h5>
+                                <span class="badge bg-<?php echo $statusClass; ?>">
+                                    <?php echo ucfirst($election['display_status']); ?>
+                                </span>
+                            </div>
 
-        <!-- Elections Table -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead>
-                            <tr>
-                                <th>Title</th>
-                                <th>Period</th>
-                                <th>Status</th>
-                                <th>Candidates</th>
-                                <th>Total Votes</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($elections as $election): ?>
-                                <tr>
-                                    <td>
-                                        <strong><?php echo htmlspecialchars($election['title']); ?></strong>
-                                        <br>
-                                        <small class="text-muted">
-                                            <?php echo htmlspecialchars($election['description']); ?>
-                                        </small>
-                                    </td>
-                                    <td>
-                                        <?php echo date('M j, Y', strtotime($election['start_date'])); ?>
-                                        <br>
-                                        <small class="text-muted">to</small>
-                                        <br>
+                            <!-- Description -->
+                            <p class="card-text text-muted small mb-3">
+                                <?php echo htmlspecialchars($election['description']); ?>
+                            </p>
+
+                            <!-- Timeline -->
+                            <div class="mb-3">
+                                <div class="d-flex align-items-center text-muted small">
+                                    <i class="fas fa-calendar me-2"></i>
+                                    <span>
+                                        <?php echo date('M j, Y', strtotime($election['start_date'])); ?> - 
                                         <?php echo date('M j, Y', strtotime($election['end_date'])); ?>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-<?php 
-                                            echo $election['display_status'] === 'active' ? 'success' : 
-                                                ($election['display_status'] === 'upcoming' ? 'info' : 'secondary');
-                                        ?>">
-                                            <?php echo ucfirst($election['display_status']); ?>
-                                        </span>
-                                        <?php if ($election['pending_requests'] > 0): ?>
-                                            <span class="badge bg-warning ms-2">
-                                                <?php echo $election['pending_requests']; ?> pending
-                                            </span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td><?php echo $election['total_candidates']; ?></td>
-                                    <td><?php echo number_format($election['total_votes']); ?></td>
-                                    <td>
-                                        <div class="btn-group">
-                                            <?php if ($election['pending_requests'] > 0): ?>
-                                                <a href="?view_requests=<?php echo $election['id']; ?>" 
-                                                   class="btn btn-warning btn-sm">
-                                                    <i class="fas fa-user-clock me-1"></i>
-                                                    View Requests (<?php echo $election['pending_requests']; ?>)
-                                                </a>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Statistics -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <div class="bg-light rounded p-2 text-center">
+                                        <div class="small text-muted">Candidates</div>
+                                        <div class="h5 mb-0">
+                                            <?php echo isset($election['approved_candidates']) ? $election['approved_candidates'] : '0'; ?>
+                                            <?php if (isset($election['pending_candidates']) && $election['pending_candidates'] > 0): ?>
+                                                <span class="badge bg-warning ms-1" title="Pending Applications">
+                                                    +<?php echo $election['pending_candidates']; ?>
+                                                </span>
                                             <?php endif; ?>
-                                            <a href="edit_election.php?id=<?php echo $election['id']; ?>" 
-                                               class="btn btn-primary btn-sm">
-                                                <i class="fas fa-edit me-1"></i>Edit
-                                            </a>
-                                            <a href="view_results.php?id=<?php echo $election['id']; ?>" 
-                                               class="btn btn-info btn-sm">
-                                                <i class="fas fa-chart-bar me-1"></i>Results
-                                            </a>
-                                            <!-- Delete Button -->
-                                            <form method="POST" action="manage_elections.php" class="d-inline">
-                                                <input type="hidden" name="election_id" value="<?php echo $election['id']; ?>">
-                                                <button type="submit" name="delete_election" class="btn btn-danger btn-sm" 
-                                                        onclick="return confirm('Are you sure you want to delete this election?');">
-                                                    <i class="fas fa-trash me-1"></i>Delete
-                                                </button>
-                                            </form>
                                         </div>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Candidate Requests Section -->
-        <?php if (!empty($candidate_requests)): ?>
-            <div class="card shadow-sm">
-                <div class="card-header bg-light">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">
-                            Pending Requests for <?php echo htmlspecialchars($candidate_requests[0]['election_title']); ?>
-                        </h5>
-                        <a href="manage_elections.php" class="btn btn-sm btn-secondary">
-                            <i class="fas fa-times me-2"></i>Close Requests
-                        </a>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="row row-cols-1 row-cols-md-2 g-4">
-                        <?php foreach ($candidate_requests as $request): ?>
-                            <div class="col">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <div class="d-flex mb-3">
-                                            <?php if ($request['photo_url']): ?>
-                                                <img src="<?php echo '../' . htmlspecialchars($request['photo_url']); ?>" 
-                                                     class="rounded-circle me-3" 
-                                                     style="width: 64px; height: 64px; object-fit: cover;"
-                                                     alt="<?php echo htmlspecialchars($request['candidate_name']); ?>">
-                                            <?php else: ?>
-                                                <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-3"
-                                                     style="width: 64px; height: 64px;">
-                                                    <i class="fas fa-user fa-2x text-muted"></i>
-                                                </div>
-                                            <?php endif; ?>
-                                            
-                                            <div>
-                                                <h5 class="card-title mb-1">
-                                                    <?php echo htmlspecialchars($request['candidate_name']); ?>
-                                                </h5>
-                                                <p class="text-muted mb-0">
-                                                    <?php echo htmlspecialchars($request['position']); ?>
-                                                </p>
-                                                <small class="text-muted">
-                                                    <?php echo htmlspecialchars($request['email']); ?>
-                                                </small>
-                                            </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="bg-light rounded p-2 text-center">
+                                        <div class="small text-muted">Total Votes</div>
+                                        <div class="h5 mb-0">
+                                            <?php echo number_format($election['total_votes'] ?? 0); ?>
                                         </div>
-
-                                        <div class="mb-3">
-                                            <small class="text-muted">
-                                                Requested on <?php echo date('M j, Y g:i A', strtotime($request['request_date'])); ?>
-                                            </small>
-                                        </div>
-
-                                        <h6>Manifesto</h6>
-                                        <p class="card-text">
-                                            <?php echo nl2br(htmlspecialchars($request['manifesto'])); ?>
-                                        </p>
-
-                                        <form method="POST" class="mt-3">
-                                            <input type="hidden" name="election_id" 
-                                                   value="<?php echo $request['election_id']; ?>">
-                                            <input type="hidden" name="candidate_id" 
-                                                   value="<?php echo $request['candidate_id']; ?>">
-                                            <input type="hidden" name="handle_request" value="1">
-                                            
-                                            <div class="btn-group w-100">
-                                                <button type="submit" name="action" value="approve" 
-                                                        class="btn btn-success">
-                                                    <i class="fas fa-check me-2"></i>Approve
-                                                </button>
-                                                <button type="submit" name="action" value="reject" 
-                                                        class="btn btn-danger">
-                                                    <i class="fas fa-times me-2"></i>Reject
-                                                </button>
-                                            </div>
-                                        </form>
                                     </div>
                                 </div>
                             </div>
-                        <?php endforeach; ?>
+
+                            <!-- Action Buttons -->
+                            <div class="d-grid gap-2">
+                                <?php if (isset($election['pending_candidates']) && $election['pending_candidates'] > 0): ?>
+                                    <a href="?view_requests=<?php echo $election['id']; ?>" 
+                                       class="btn btn-warning btn-sm" title="Review Pending Applications">
+                                        <i class="fas fa-user-clock"></i>
+                                    </a>
+                                <?php endif; ?>
+                                
+                                <a href="edit_election.php?id=<?php echo $election['id']; ?>" 
+                                   class="btn btn-primary btn-sm" title="Edit Election">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                
+                                <?php if ($election['display_status'] === 'completed'): ?>
+                                    <a href="view_results.php?id=<?php echo $election['id']; ?>" 
+                                       class="btn btn-info btn-sm" title="View Results">
+                                        <i class="fas fa-chart-bar"></i>
+                                    </a>
+                                <?php endif; ?>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        <?php endif; ?>
+            <?php endforeach; ?>
+        </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 
+    <style>
+    .card {
+        transition: transform 0.2s;
+        border-radius: 10px;
+        border: none;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    .badge {
+        font-weight: 500;
+        padding: 0.5em 0.8em;
+    }
+    .btn-sm {
+        padding: 0.5rem 1rem;
+    }
+    .bg-primary {
+        background: linear-gradient(45deg, #4e73df, #224abe) !important;
+    }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
 

@@ -85,7 +85,6 @@ function createUploadDirectories() {
     $baseUploadDir = '../uploads/';
     $directories = [
         'photos' => $baseUploadDir . 'profile_photos/',
-        'transcripts' => $baseUploadDir . 'academic_transcripts/',
     ];
 
     // Create directories if they don't exist
@@ -105,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Validate required fields
         $required_fields = ['first_name', 'surname', 'email', 'phone', 'student_id', 
-                          'program', 'year_of_study', 'gpa', 'role', 'branch'];
+                          'program', 'year_of_study', 'role', 'branch', 'manifesto'];
         
         foreach ($required_fields as $field) {
             if (empty($_POST[$field])) {
@@ -123,15 +122,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = "Invalid phone number format";
         }
 
-        // Validate GPA
-        if (!is_numeric($_POST['gpa']) || $_POST['gpa'] < 0 || $_POST['gpa'] > 4.0) {
-            $errors[] = "Invalid GPA value";
-        }
-
         // Validate file uploads
         $allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif'];
-        $allowedDocTypes = ['application/pdf', 'application/msword', 
-                          'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
         $maxFileSize = 5 * 1024 * 1024; // 5MB
 
         // Validate profile photo
@@ -139,14 +131,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $photoError = validateFileUpload($_FILES['profile_photo'], $allowedImageTypes, $maxFileSize);
             if ($photoError) {
                 $errors[] = "Profile photo error: " . $photoError;
-            }
-        }
-
-        // Validate transcript
-        if (isset($_FILES['transcript'])) {
-            $transcriptError = validateFileUpload($_FILES['transcript'], $allowedDocTypes, $maxFileSize);
-            if ($transcriptError) {
-                $errors[] = "Transcript error: " . $transcriptError;
             }
         }
 
@@ -196,16 +180,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
 
-                // Handle transcript upload
-                if (isset($_FILES['transcript']) && $_FILES['transcript']['error'] === UPLOAD_ERR_OK) {
-                    $transcriptFileName = uniqid() . '_' . basename($_FILES['transcript']['name']);
-                    $transcriptPath = $uploadDirs['transcripts'] . $transcriptFileName;
-
-                    if (!move_uploaded_file($_FILES['transcript']['tmp_name'], $transcriptPath)) {
-                        throw new Exception("Failed to upload academic transcript");
-                    }
-                }
-
                 // Sanitize input data
                 $firstName = htmlspecialchars(trim($_POST['first_name']));
                 $surname = htmlspecialchars(trim($_POST['surname']));
@@ -214,19 +188,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $studentId = htmlspecialchars(trim($_POST['student_id']));
                 $program = htmlspecialchars(trim($_POST['program']));
                 $yearOfStudy = intval($_POST['year_of_study']);
-                $gpa = floatval($_POST['gpa']);
                 $role = htmlspecialchars(trim($_POST['role']));
                 $branch = htmlspecialchars(trim($_POST['branch']));
+                $manifesto = htmlspecialchars(trim($_POST['manifesto']));
 
                 // Insert nomination into database using PDO
                 $query = "INSERT INTO nominations (
                     user_id, first_name, surname, email, phone, 
-                    student_id, program, year_of_study, gpa, role, 
-                    branch, photo_path, transcript_path, submission_date
+                    student_id, program, year_of_study, role, 
+                    branch, photo_path, manifesto, submission_date
                 ) VALUES (
                     :user_id, :first_name, :surname, :email, :phone,
-                    :student_id, :program, :year_of_study, :gpa, :role,
-                    :branch, :photo_path, :transcript_path, NOW()
+                    :student_id, :program, :year_of_study, :role,
+                    :branch, :photo_path, :manifesto, NOW()
                 )";
 
                 $stmt = $conn->prepare($query);
@@ -241,11 +215,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ':student_id' => $studentId,
                     ':program' => $program,
                     ':year_of_study' => $yearOfStudy,
-                    ':gpa' => $gpa,
                     ':role' => $role,
                     ':branch' => $branch,
                     ':photo_path' => $photoPath,
-                    ':transcript_path' => $transcriptPath
+                    ':manifesto' => $manifesto
                 ]);
 
                 // Get the nomination ID
@@ -272,18 +245,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ':mime_type' => $photoMime
                 ]);
 
-                // Insert transcript document
-                $transcriptSize = filesize($transcriptPath);
-                $transcriptMime = mime_content_type($transcriptPath);
-                $docStmt->execute([
-                    ':nomination_id' => $nominationId,
-                    ':document_type' => 'transcript',
-                    ':file_path' => $transcriptPath,
-                    ':file_name' => $transcriptFileName,
-                    ':file_size' => $transcriptSize,
-                    ':mime_type' => $transcriptMime
-                ]);
-
                 $conn->commit();
                 $_SESSION['success_message'] = "<div class='alert alert-success alert-dismissible fade show' role='alert'>
                     <h4 class='alert-heading'><i class='fas fa-check-circle me-2'></i>Application Submitted Successfully!</h4>
@@ -308,9 +269,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Clean up uploaded files if they exist
                 if (isset($photoPath) && file_exists($photoPath)) {
                     unlink($photoPath);
-                }
-                if (isset($transcriptPath) && file_exists($transcriptPath)) {
-                    unlink($transcriptPath);
                 }
             }
         } else {
@@ -451,7 +409,7 @@ if (isset($_SESSION['success_message'])): ?>
                                         value="<?php echo isset($formData['program']) ? htmlspecialchars($formData['program']) : ''; ?>" 
                                         required>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-12">
                                     <label for="year_of_study" class="form-label">Year of Study</label>
                                     <select class="form-select" id="year_of_study" name="year_of_study" required>
                                         <option value="">Select Year</option>
@@ -460,12 +418,6 @@ if (isset($_SESSION['success_message'])): ?>
                                         <option value="3">Third Year</option>
                                         <option value="4">Fourth Year</option>
                                     </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="gpa" class="form-label">Current GPA</label>
-                                    <input type="number" step="0.01" class="form-control" id="gpa" name="gpa" 
-                                        value="<?php echo isset($formData['gpa']) ? htmlspecialchars($formData['gpa']) : ''; ?>" 
-                                        required>
                                 </div>
                             </div>
                         </div>
@@ -498,21 +450,22 @@ if (isset($_SESSION['success_message'])): ?>
                             </div>
                         </div>
 
-                        <!-- Required Documents -->
+                        <!-- Required Documents and Manifesto -->
                         <div class="mb-4">
                             <h5 class="text-custom-primary mb-3">
-                                <i class="fas fa-file-upload me-2"></i>Required Documents
+                                <i class="fas fa-file-upload me-2"></i>Required Information
                             </h5>
                             <div class="row g-3">
-                                <div class="col-md-6">
+                                <div class="col-md-12">
                                     <label for="profile_photo" class="form-label">Profile Photo</label>
                                     <input type="file" class="form-control" id="profile_photo" name="profile_photo" accept="image/*" required>
                                 </div>
-                                <div class="col-md-6">
-                                    <label for="transcript" class="form-label">Academic Transcript</label>
-                                    <input type="file" class="form-control" id="transcript" name="transcript" accept=".pdf,.doc,.docx" required>
+                                <div class="col-md-12">
+                                    <label for="manifesto" class="form-label">Your Manifesto</label>
+                                    <textarea class="form-control" id="manifesto" name="manifesto" rows="6" required 
+                                        placeholder="Share your vision, goals, and why you would be the best candidate for this position..."></textarea>
+                                    <div class="form-text">Minimum 200 words. Share your vision, experience, and what you hope to achieve if elected.</div>
                                 </div>
-                           
                             </div>
                         </div>
 
@@ -818,3 +771,4 @@ document.head.appendChild(style);
 
 <?php require_once '../includes/footer.php'; ?>
 
+ 
