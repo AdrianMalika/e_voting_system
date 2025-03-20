@@ -2,252 +2,231 @@
 require_once '../includes/header.php';
 require_once '../includes/notifications.php';
 
-
 if (!isset($_SESSION['user_id']) || $user['role'] !== 'admin') {
     header("Location: ../login.php");
     exit();
 }
 
-$error = null;
-$success = null;
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $title = trim(htmlspecialchars($_POST['title'] ?? '', ENT_QUOTES, 'UTF-8'));
-    $description = trim(htmlspecialchars($_POST['description'] ?? '', ENT_QUOTES, 'UTF-8'));
-    $start_date = filter_input(INPUT_POST, 'start_date');
-    $end_date = filter_input(INPUT_POST, 'end_date');
-    $positions = isset($_POST['positions']) ? array_map(function($pos) {
-        return trim(htmlspecialchars($pos, ENT_QUOTES, 'UTF-8'));
-    }, $_POST['positions']) : [];
-    $positions = array_filter($positions);
-
-    // Validate required fields
-    if (!$title || !$description || !$start_date || !$end_date || empty($positions)) {
-        $error = "All fields are required";
-    } else {
-        // Convert dates to MySQL format
-        $start_datetime = date('Y-m-d H:i:s', strtotime($start_date));
-        $end_datetime = date('Y-m-d H:i:s', strtotime($end_date));
-
-        // Validate dates
-        if (strtotime($start_date) >= strtotime($end_date)) {
-            $error = "End date must be after start date";
-        } elseif (strtotime($start_date) < time()) {
-            $error = "Start date cannot be in the past";
-        } else {
-            try {
-                $conn->beginTransaction();
-
-                
-                $stmt = $conn->prepare("
-                    INSERT INTO elections (title, description, start_date, end_date, created_by, status)
-                    VALUES (?, ?, ?, ?, ?, 'upcoming')
-                ");
-                
-                if (!$stmt->execute([$title, $description, $start_datetime, $end_datetime, $user['id']])) {
-                    throw new Exception("Failed to create election");
-                }
-                
-                $election_id = $conn->lastInsertId();
-
-                // Insert positions for this election
-                $stmt = $conn->prepare("
-                    INSERT INTO election_positions (election_id, position_name)
-                    VALUES (?, ?)
-                ");
-
-                foreach ($positions as $position) {
-                    if (!empty(trim($position))) {
-                        if (!$stmt->execute([$election_id, trim($position)])) {
-                            throw new Exception("Failed to add position: " . htmlspecialchars($position));
-                        }
-                    }
-                }
-
-                // Log the action
-                $stmt = $conn->prepare("
-                    INSERT INTO audit_logs (user_id, action, details, ip_address)
-                    VALUES (?, 'CREATE_ELECTION', ?, ?)
-                ");
-                $stmt->execute([
-                    $user['id'],
-                    "Created election: $title",
-                    $_SERVER['REMOTE_ADDR']
-                ]);
-
-                // Create notification for admin
-                add_notification(
-                    $conn,
-                    'new_election',
-                    "New election created: $title (Starting: " . date('M j, Y', strtotime($start_datetime)) . ")",
-                    $election_id,
-                    'election',
-                    $user['id']
-                );
-
-                // Get all students and create notifications for them
-                $stmt = $conn->prepare("SELECT id FROM users WHERE role = 'student'");
-                $stmt->execute();
-                $students = $stmt->fetchAll(PDO::FETCH_COLUMN);
-                
-                foreach ($students as $student_id) {
-                    // Check if this student already has a notification for this election
-                    $stmt = $conn->prepare("
-                        SELECT COUNT(*) FROM notifications 
-                        WHERE user_id = ? AND reference_id = ? AND type = 'new_election'
-                    ");
-                    $stmt->execute([$student_id, $election_id]);
-                    $exists = $stmt->fetchColumn();
-                    
-                    if (!$exists) {
-                        add_notification(
-                            $conn,
-                            'new_election',
-                            "A new election '$title' has been created and will start on " . date('M j, Y', strtotime($start_datetime)),
-                            $election_id,
-                            'election',
-                            $student_id
-                        );
-                    }
-                }
-
-                $conn->commit();
-                $success = "Election created successfully";
-
-                // Clear form data
-                $title = $description = $start_date = $end_date = '';
-                $positions = [];
-            } catch (Exception $e) {
-                $conn->rollBack();
-                $error = "Error creating election: " . $e->getMessage();
+    try {
+        // Validate input
+        $required_fields = ['title', 'description', 'voting_start', 'voting_end'];
+        
+        $errors = [];
+        foreach ($required_fields as $field) {
+            if (empty($_POST[$field])) {
+                $errors[] = ucfirst(str_replace('_', ' ', $field)) . " is required";
             }
         }
+
+        if (empty($errors)) {
+            $conn->beginTransaction();
+
+            // Insert election
+            $stmt = $conn->prepare("
+                INSERT INTO elections (
+                    title, description, 
+                    start_date, end_date,
+                    created_by, status
+                ) VALUES (?, ?, ?, ?, ?, 'upcoming')
+            ");
+
+            $stmt->execute([
+                $_POST['title'],
+                $_POST['description'],
+                $_POST['voting_start'],
+                $_POST['voting_end'],
+                $_SESSION['user_id']
+            ]);
+
+            $election_id = $conn->lastInsertId();
+
+            // Insert positions
+            foreach ($_POST['positions'] as $index => $position) {
+                $stmt = $conn->prepare("
+                    INSERT INTO election_positions (
+                        election_id, position_name, position_description,
+                        required_year, max_candidates
+                    ) VALUES (?, ?, ?, ?, ?)
+                ");
+
+                $stmt->execute([
+                    $election_id,
+                    $position,
+                    $_POST['position_descriptions'][$index],
+                    $_POST['position_years'][$index],
+                    $_POST['position_max_candidates'][$index]
+                ]);
+            }
+
+            // Create notifications
+            add_notification(
+                $conn,
+                'new_election',
+                "New election created: {$_POST['title']}",
+                $election_id,
+                'election',
+                $_SESSION['user_id']
+            );
+
+            $conn->commit();
+            $_SESSION['success'] = "Election created successfully";
+            header("Location: manage_elections.php");
+            exit();
+        }
+    } catch (Exception $e) {
+        $conn->rollBack();
+        $errors[] = "Error: " . $e->getMessage();
     }
 }
 ?>
 
 <div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Create New Election</h2>
-        <a href="elections.php" class="btn btn-secondary">
-            <i class="fas fa-arrow-left me-2"></i>Back to Elections
-        </a>
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h1 class="mb-0">Create New Election</h1>
+                        <a href="manage_elections.php" class="btn btn-light">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Elections
+                        </a>
+                    </div>
+                    <p class="lead mt-2 mb-0">Configure all aspects of the new election</p>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <?php if ($error): ?>
-        <div class="alert alert-danger">
-            <i class="fas fa-exclamation-circle me-2"></i><?php echo $error; ?>
-        </div>
-    <?php endif; ?>
-
-    <?php if ($success): ?>
-        <div class="alert alert-success">
-            <i class="fas fa-check-circle me-2"></i><?php echo $success; ?>
-        </div>
-    <?php endif; ?>
-
+    <!-- Form -->
     <div class="card shadow-sm">
         <div class="card-body">
             <form method="POST" class="needs-validation" novalidate>
-                <div class="mb-3">
-                    <label for="title" class="form-label">Election Title</label>
-                    <input type="text" class="form-control" id="title" name="title" 
-                           value="<?php echo isset($title) ? htmlspecialchars($title) : ''; ?>" required>
-                    <div class="invalid-feedback">Please provide an election title.</div>
-                </div>
-
-                <div class="mb-3">
-                    <label for="description" class="form-label">Description</label>
-                    <textarea class="form-control" id="description" name="description" rows="3" required><?php 
-                        echo isset($description) ? htmlspecialchars($description) : ''; 
-                    ?></textarea>
-                    <div class="invalid-feedback">Please provide a description.</div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="start_date" class="form-label">Start Date & Time</label>
-                        <input type="datetime-local" class="form-control" id="start_date" name="start_date"
-                               value="<?php echo isset($start_date) ? $start_date : ''; ?>" required>
-                        <div class="invalid-feedback">Please select a start date and time.</div>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label for="end_date" class="form-label">End Date & Time</label>
-                        <input type="datetime-local" class="form-control" id="end_date" name="end_date"
-                               value="<?php echo isset($end_date) ? $end_date : ''; ?>" required>
-                        <div class="invalid-feedback">Please select an end date and time.</div>
+                <!-- Basic Information -->
+                <div class="mb-4">
+                    <h5><i class="fas fa-info-circle me-2"></i>Basic Information</h5>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label for="title">Election Title</label>
+                            <input type="text" class="form-control" name="title" required>
+                        </div>
+                        <div class="col-12">
+                            <label for="description">Description</label>
+                            <textarea class="form-control" name="description" rows="3" required></textarea>
+                        </div>
                     </div>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Positions</label>
+                <!-- Timeline -->
+                <div class="mb-4">
+                    <h5><i class="fas fa-calendar-alt me-2"></i>Voting Period</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label>Start Date & Time</label>
+                            <input type="datetime-local" class="form-control" name="voting_start" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label>End Date & Time</label>
+                            <input type="datetime-local" class="form-control" name="voting_end" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Positions -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="fas fa-users me-2"></i>Election Positions</h5>
+                        <button type="button" class="btn btn-secondary" onclick="addPosition()">
+                            <i class="fas fa-plus me-2"></i>Add Position
+                        </button>
+                    </div>
                     <div id="positions-container">
-                        <?php 
-                        $positions = isset($positions) ? $positions : [''];
-                        foreach ($positions as $index => $position): 
-                        ?>
-                            <div class="input-group mb-2">
-                                <input type="text" class="form-control" name="positions[]" 
-                                       value="<?php echo htmlspecialchars($position); ?>" 
-                                       placeholder="Enter position name" required>
-                                <?php if ($index === 0): ?>
-                                    <button type="button" class="btn btn-primary" onclick="addPosition()">
-                                        <i class="fas fa-plus"></i>
-                                    </button>
-                                <?php else: ?>
-                                    <button type="button" class="btn btn-danger" onclick="removePosition(this)">
-                                        <i class="fas fa-minus"></i>
-                                    </button>
-                                <?php endif; ?>
-                            </div>
-                        <?php endforeach; ?>
+                        <!-- Position template will be added here -->
                     </div>
                 </div>
 
                 <div class="d-grid">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-plus-circle me-2"></i>Create Election
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save me-2"></i>Create Election
                     </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+<style>
+.card {
+    border: none;
+    border-radius: 10px;
+}
+.btn {
+    border-radius: 7px;
+    padding: 0.75rem 1.5rem;
+}
+.form-control {
+    border-radius: 7px;
+    padding: 0.75rem 1rem;
+}
+.position-entry {
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+.bg-primary {
+    background: linear-gradient(45deg, #4e73df, #224abe) !important;
+}
+</style>
+
 <script>
 function addPosition() {
     const container = document.getElementById('positions-container');
-    const newPosition = document.createElement('div');
-    newPosition.className = 'input-group mb-2';
-    newPosition.innerHTML = `
-        <input type="text" class="form-control" name="positions[]" 
-               placeholder="Enter position name" required>
-        <button type="button" class="btn btn-danger" onclick="removePosition(this)">
-            <i class="fas fa-minus"></i>
-        </button>
+    const positionHtml = `
+        <div class="position-entry">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0">Position Details</h6>
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="removePosition(this)">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label>Position Name</label>
+                    <input type="text" class="form-control" name="positions[]" required>
+                </div>
+                <div class="col-md-6">
+                    <label>Position Description</label>
+                    <input type="text" class="form-control" name="position_descriptions[]" required>
+                </div>
+                <div class="col-md-6">
+                    <label>Required Year</label>
+                    <select class="form-select" name="position_years[]">
+                        <option value="">Any Year</option>
+                        <option value="1">First Year</option>
+                        <option value="2">Second Year</option>
+                        <option value="3">Third Year</option>
+                        <option value="4">Fourth Year</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label>Max Candidates</label>
+                    <input type="number" class="form-control" name="position_max_candidates[]" min="1" value="1" required>
+                </div>
+            </div>
+        </div>
     `;
-    container.appendChild(newPosition);
+    container.insertAdjacentHTML('beforeend', positionHtml);
 }
 
 function removePosition(button) {
-    button.closest('.input-group').remove();
+    button.closest('.position-entry').remove();
 }
 
-// Form validation
-(function () {
-    'use strict'
-    var forms = document.querySelectorAll('.needs-validation')
-    Array.prototype.slice.call(forms)
-        .forEach(function (form) {
-            form.addEventListener('submit', function (event) {
-                if (!form.checkValidity()) {
-                    event.preventDefault()
-                    event.stopPropagation()
-                }
-                form.classList.add('was-validated')
-            }, false)
-        })
-})()
+document.addEventListener('DOMContentLoaded', function() {
+    addPosition();
+});
 </script>
 
 <?php require_once '../includes/footer.php'; ?>
