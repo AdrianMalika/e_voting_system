@@ -85,15 +85,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Header -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h1 class="mb-0">Create New Election</h1>
-                        <a href="manage_elections.php" class="btn btn-light">
-                            <i class="fas fa-arrow-left me-2"></i>Back to Elections
-                        </a>
+            <div class="bg-gradient-primary text-white p-4 rounded-3 shadow">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="display-6 mb-1">Create New Election</h2>
+                        <p class="lead mb-0">Configure all aspects of the new election</p>
                     </div>
-                    <p class="lead mt-2 mb-0">Configure all aspects of the new election</p>
+                    <a href="manage_elections.php" class="btn btn-light">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Elections
+                    </a>
                 </div>
             </div>
         </div>
@@ -157,26 +157,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </div>
 
 <style>
+.bg-gradient-primary {
+    background: linear-gradient(45deg, #2c3e50, #3498db);
+}
+
 .card {
     border: none;
-    border-radius: 10px;
+    border-radius: 15px;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08);
 }
+
 .btn {
     border-radius: 7px;
     padding: 0.75rem 1.5rem;
 }
-.form-control {
+
+.btn-primary {
+    background-color: #2c3e50;
+    border-color: #2c3e50;
+}
+
+.btn-primary:hover {
+    background-color: #34495e;
+    border-color: #34495e;
+}
+
+.form-control, .form-select {
     border-radius: 7px;
     padding: 0.75rem 1rem;
 }
+
 .position-entry {
     background-color: #f8f9fa;
-    border-radius: 10px;
+    border-radius: 15px;
     padding: 1.5rem;
     margin-bottom: 1rem;
+    transition: all 0.3s ease;
 }
-.bg-primary {
-    background: linear-gradient(45deg, #4e73df, #224abe) !important;
+
+.position-entry:hover {
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.05);
+}
+
+.shadow-hover {
+    transition: all 0.3s ease;
+}
+
+.shadow-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+h5 {
+    color: #2c3e50;
+}
+
+.btn-secondary {
+    background-color: #3498db;
+    border-color: #3498db;
+}
+
+.btn-secondary:hover {
+    background-color: #2980b9;
+    border-color: #2980b9;
 }
 </style>
 

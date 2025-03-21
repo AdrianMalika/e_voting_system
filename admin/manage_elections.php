@@ -91,6 +91,11 @@ $stmt = $conn->prepare("
             WHERE ec.election_id = e.id 
             AND ec.status = 'pending'
         ) as pending_candidates,
+        (
+            SELECT COUNT(DISTINCT voter_id) 
+            FROM votes 
+            WHERE election_id = e.id
+        ) as participating_students,
         CASE 
             WHEN NOW() BETWEEN e.start_date AND e.end_date THEN 'active'
             WHEN NOW() > e.end_date THEN 'completed'
@@ -133,18 +138,21 @@ if (isset($_GET['view_requests']) && is_numeric($_GET['view_requests'])) {
     <title>Manage Elections - E-Voting System</title>
 </head>
 <body>
-    <div class="container py-4">
+    <div class="container-fluid py-4">
         <!-- Dashboard Header -->
         <div class="row mb-4">
             <div class="col-12">
-                <div class="card bg-primary text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h2 class="mb-1">Election Dashboard</h2>
-                                <p class="mb-0">Manage and monitor all elections</p>
-                            </div>
-                            <a href="add_election.php" class="btn btn-light">
+                <div class="bg-gradient-primary text-white p-4 rounded-3 shadow">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="display-6 mb-1">Election Management</h2>
+                            <p class="lead mb-0">Monitor and manage all election activities</p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#statsModal">
+                                <i class="fas fa-chart-pie me-2"></i>Statistics
+                            </button>
+                            <a href="add_election.php" class="btn btn-success">
                                 <i class="fas fa-plus me-2"></i>Create Election
                             </a>
                         </div>
@@ -154,130 +162,251 @@ if (isset($_GET['view_requests']) && is_numeric($_GET['view_requests'])) {
         </div>
 
         <!-- Alert Messages -->
-        <?php if (isset($_SESSION['success'])): ?>
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fas fa-check-circle me-2"></i><?php echo $_SESSION['success']; unset($_SESSION['success']); ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <?php if (isset($_SESSION['success']) || isset($_SESSION['error'])): ?>
+        <div class="row mb-4">
+            <div class="col-12">
+                <?php if (isset($_SESSION['success'])): ?>
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-2"></i><?php echo $_SESSION['success']; unset($_SESSION['success']); ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php endif; ?>
+
+                <?php if (isset($_SESSION['error'])): ?>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i><?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php endif; ?>
             </div>
+        </div>
         <?php endif; ?>
 
-        <?php if (isset($_SESSION['error'])): ?>
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="fas fa-exclamation-circle me-2"></i><?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <!-- Election Status Filters -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-primary active" data-filter="all">All Elections</button>
+                            <button class="btn btn-outline-warning" data-filter="upcoming">Upcoming</button>
+                            <button class="btn btn-outline-success" data-filter="active">Active</button>
+                            <button class="btn btn-outline-secondary" data-filter="completed">Completed</button>
+                        </div>
+                    </div>
+                </div>
             </div>
-        <?php endif; ?>
+        </div>
 
         <!-- Elections Grid -->
-        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
-65            <?php foreach ($elections as $election): ?>
-                <div class="col">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <!-- Status Badge -->
-                            <?php
-                            $statusClass = match($election['display_status']) {
-                                'active' => 'success',
-                                'completed' => 'secondary',
-                                default => 'warning'
-                            };
-                            ?>
-                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                <h5 class="card-title mb-0"><?php echo htmlspecialchars($election['title']); ?></h5>
-                                <span class="badge bg-<?php echo $statusClass; ?>">
+        <div class="row g-4">
+            <?php foreach ($elections as $election): ?>
+            <div class="col-12 col-md-6 col-xl-4 election-card" data-status="<?php echo $election['display_status']; ?>">
+                <div class="card h-100 border-0 shadow-hover">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h5 class="card-title mb-1"><?php echo htmlspecialchars($election['title']); ?></h5>
+                                <span class="badge bg-<?php echo match($election['display_status']) {
+                                    'active' => 'success',
+                                    'completed' => 'secondary',
+                                    default => 'warning'
+                                }; ?> rounded-pill">
                                     <?php echo ucfirst($election['display_status']); ?>
                                 </span>
                             </div>
+                        </div>
 
-                            <!-- Description -->
-                            <p class="card-text text-muted small mb-3">
-                                <?php echo htmlspecialchars($election['description']); ?>
-                            </p>
+                        <p class="card-text text-muted small mb-3">
+                            <?php echo htmlspecialchars($election['description']); ?>
+                        </p>
 
-                            <!-- Timeline -->
-                            <div class="mb-3">
-                                <div class="d-flex align-items-center text-muted small">
-                                    <i class="fas fa-calendar me-2"></i>
-                                    <span>
-                                        <?php echo date('M j, Y', strtotime($election['start_date'])); ?> - 
-                                        <?php echo date('M j, Y', strtotime($election['end_date'])); ?>
-                                    </span>
-                                </div>
-                            </div>
+                        <div class="d-flex align-items-center text-muted small mb-3">
+                            <i class="fas fa-calendar me-2"></i>
+                            <span>
+                                <?php echo date('M j, Y', strtotime($election['start_date'])); ?> - 
+                                <?php echo date('M j, Y', strtotime($election['end_date'])); ?>
+                            </span>
+                        </div>
 
-                            <!-- Statistics -->
-                            <div class="row g-2 mb-3">
-                                <div class="col-6">
-                                    <div class="bg-light rounded p-2 text-center">
-                                        <div class="small text-muted">Candidates</div>
-                                        <div class="h5 mb-0">
-                                            <?php echo isset($election['approved_candidates']) ? $election['approved_candidates'] : '0'; ?>
-                                            <?php if (isset($election['pending_candidates']) && $election['pending_candidates'] > 0): ?>
-                                                <span class="badge bg-warning ms-1" title="Pending Applications">
-                                                    +<?php echo $election['pending_candidates']; ?>
-                                                </span>
-                                            <?php endif; ?>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <div class="bg-light rounded-3 p-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="icon-box bg-primary text-white rounded-circle me-2">
+                                            <i class="fas fa-users"></i>
                                         </div>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="bg-light rounded p-2 text-center">
-                                        <div class="small text-muted">Total Votes</div>
-                                        <div class="h5 mb-0">
-                                            <?php echo number_format($election['total_votes'] ?? 0); ?>
+                                        <div>
+                                            <div class="small text-muted">Candidates</div>
+                                            <div class="fw-bold">
+                                                <?php echo $election['approved_candidates']; ?>
+                                                <?php if ($election['pending_candidates'] > 0): ?>
+                                                <span class="badge bg-warning ms-1">+<?php echo $election['pending_candidates']; ?></span>
+                                                <?php endif; ?>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Action Buttons -->
-                            <div class="d-grid gap-2">
-                                <?php if (isset($election['pending_candidates']) && $election['pending_candidates'] > 0): ?>
-                                    <a href="?view_requests=<?php echo $election['id']; ?>" 
-                                       class="btn btn-warning btn-sm" title="Review Pending Applications">
-                                        <i class="fas fa-user-clock"></i>
-                                    </a>
-                                <?php endif; ?>
-                                
-                                <a href="edit_election.php?id=<?php echo $election['id']; ?>" 
-                                   class="btn btn-primary btn-sm" title="Edit Election">
-                                    <i class="fas fa-edit"></i>
+                            <div class="col-6">
+                                <div class="bg-light rounded-3 p-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="icon-box bg-success text-white rounded-circle me-2">
+                                            <i class="fas fa-vote-yea"></i>
+                                        </div>
+                                        <div>
+                                            <div class="small text-muted">Total Votes</div>
+                                            <div class="fw-bold"><?php echo number_format($election['total_votes'] ?? 0); ?></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <a href="view_candidates.php?election_id=<?php echo $election['id']; ?>" class="btn btn-outline-primary btn-sm w-100">
+                                    <i class="fas fa-users me-2"></i>View Candidates
                                 </a>
-                                
-                                <?php if ($election['display_status'] === 'completed'): ?>
-                                    <a href="view_results.php?id=<?php echo $election['id']; ?>" 
-                                       class="btn btn-info btn-sm" title="View Results">
-                                        <i class="fas fa-chart-bar"></i>
-                                    </a>
-                                <?php endif; ?>
+                            </div>
+                            <div class="col-6">
+                                <form method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this election? This action cannot be undone.');">
+                                    <input type="hidden" name="election_id" value="<?php echo $election['id']; ?>">
+                                    <button type="submit" name="delete_election" class="btn btn-danger btn-sm w-100">
+                                        <i class="fas fa-trash-alt me-2"></i>Delete Election
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
             <?php endforeach; ?>
         </div>
     </div>
 
+    <!-- Participants Modal -->
+    <div class="modal fade" id="participantsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Election Participants</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="participantsList" class="table-responsive">
+                        <!-- Participants will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <style>
-    .card {
-        transition: transform 0.2s;
-        border-radius: 10px;
-        border: none;
+    .bg-gradient-primary {
+        background: linear-gradient(45deg, #2c3e50, #3498db);
     }
-    .card:hover {
+
+    .shadow-hover {
+        transition: all 0.3s ease;
+    }
+
+    .shadow-hover:hover {
         transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
     }
-    .badge {
-        font-weight: 500;
-        padding: 0.5em 0.8em;
+
+    .icon-box {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
-    .btn-sm {
+
+    .dropdown-item {
         padding: 0.5rem 1rem;
     }
-    .bg-primary {
-        background: linear-gradient(45deg, #4e73df, #224abe) !important;
+
+    .badge {
+        font-weight: 500;
+        padding: 0.5em 1em;
+    }
+
+    .btn-outline-primary.active {
+        background-color: #2c3e50;
+        border-color: #2c3e50;
+        color: white;
+    }
+
+    .election-card {
+        transition: opacity 0.3s ease;
+    }
+
+    .election-card.hidden {
+        display: none;
     }
     </style>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Filter buttons functionality
+        const filterButtons = document.querySelectorAll('[data-filter]');
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Update active state of buttons
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+
+                // Filter cards
+                const filter = this.dataset.filter;
+                const cards = document.querySelectorAll('.election-card');
+                
+                cards.forEach(card => {
+                    if (filter === 'all' || card.dataset.status === filter) {
+                        card.classList.remove('hidden');
+                    } else {
+                        card.classList.add('hidden');
+                    }
+                });
+            });
+        });
+    });
+
+    function viewParticipants(electionId) {
+        const participantsList = document.getElementById('participantsList');
+        participantsList.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+
+        fetch(`get_participants.php?election_id=${electionId}`)
+            .then(response => response.json())
+            .then(data => {
+                let html = `
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Student Name</th>
+                                <th>Email</th>
+                                <th>Voted On</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                data.forEach(participant => {
+                    html += `
+                        <tr>
+                            <td>${participant.name}</td>
+                            <td>${participant.email}</td>
+                            <td>${participant.voted_at}</td>
+                        </tr>
+                    `;
+                });
+
+                html += '</tbody></table>';
+                participantsList.innerHTML = html;
+            })
+            .catch(error => {
+                participantsList.innerHTML = '<div class="alert alert-danger">Error loading participants</div>';
+            });
+    }
+    </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

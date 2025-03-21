@@ -13,6 +13,20 @@ $stmt->execute();
 $applicationPeriod = $stmt->fetch(PDO::FETCH_ASSOC) ?: ['end' => 0];
 $applicationEnd = $applicationPeriod['end'];
 
+// Add this after your existing database queries at the top of the file
+$stmt = $conn->prepare("
+    SELECT DISTINCT position_name
+    FROM election_positions ep
+    JOIN elections e ON ep.election_id = e.id
+    WHERE e.status IN ('upcoming', 'active', 'completed')
+    ORDER BY position_name
+");
+
+$stmt->execute();
+$available_positions = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+// Check if there are any available positions
+$hasAvailablePositions = !empty($available_positions);
 
 // Update the isApplicationOpen check to only use end time
 $currentTimestamp = time();
@@ -160,6 +174,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header("Location: " . $_SERVER['PHP_SELF']);
                 exit();
             }
+        }
+
+        // Validate position requirements
+        $stmt = $conn->prepare("
+            SELECT required_year 
+            FROM election_positions 
+            WHERE position_name = ?
+        ");
+        $stmt->execute([$_POST['role']]);
+        $position = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($position && $position['required_year'] && $position['required_year'] != $_POST['year_of_study']) {
+            $errors[] = "This position requires Year " . $position['required_year'] . " students";
         }
 
         // If there are no errors, proceed with submission
@@ -432,10 +459,11 @@ if (isset($_SESSION['success_message'])): ?>
                                     <label for="role" class="form-label">Position Applying For</label>
                                     <select id="role" name="role" class="form-select" required>
                                         <option value="">Select Position</option>
-                                        <option value="President">President</option>
-                                        <option value="Vice President">Vice President</option>
-                                        <option value="Secretary">Secretary</option>
-                                        <option value="Treasurer">Treasurer</option>
+                                        <?php foreach ($available_positions as $position): ?>
+                                            <option value="<?php echo htmlspecialchars($position); ?>">
+                                                <?php echo htmlspecialchars($position); ?>
+                                            </option>
+                                        <?php endforeach; ?>
                                     </select>
                                 </div>
                                 <div class="col-md-6">
@@ -469,15 +497,7 @@ if (isset($_SESSION['success_message'])): ?>
                             </div>
                         </div>
 
-                        <!-- Declaration -->
-                        <div class="mb-4">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="declaration" required>
-                                <label class="form-check-label" for="declaration">
-                                    I declare that all information provided is true and accurate. I understand that any false information may result in disqualification.
-                                </label>
-                            </div>
-                        </div>
+                      
 
                         <!-- Submit Button -->
                         <div class="col-12">
@@ -493,11 +513,11 @@ if (isset($_SESSION['success_message'])): ?>
     </div>
 </div>
 
-<!-- Guidelines Modal -->
+<!-- Guidelines Modal -->l
 <div class="modal fade" id="guidelinesModal" tabindex="-1" aria-labelledby="guidelinesModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header bg-custom-primary text-white">
+            <div class="modal-header bg-gradient-primary text-white">
                 <h5 class="modal-title" id="guidelinesModalLabel">
                     <i class="fas fa-clipboard-list me-2"></i>
                     Application Guidelines
@@ -512,10 +532,37 @@ if (isset($_SESSION['success_message'])): ?>
                             <i class="fas fa-user-check me-2"></i>Eligibility Requirements
                         </h6>
                         <ul class="list-group list-group-flush">
-                            <li class="list-group-item">Must be a registered student in good academic standing</li>
-                            <li class="list-group-item">Minimum GPA of 2.5 or equivalent</li>
+                            <li class="list-group-item">Must be a currently enrolled student</li>
                             <li class="list-group-item">No disciplinary records</li>
                             <li class="list-group-item">Must be enrolled for the entire academic year</li>
+                            <li class="list-group-item">Must be in good academic standing</li>
+                        </ul>
+                    </div>
+
+                    <!-- Required Documents -->
+                    <div class="col-12">
+                        <h6 class="fw-bold text-custom-primary">
+                            <i class="fas fa-file-alt me-2"></i>Required Information
+                        </h6>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <i class="fas fa-id-card me-2 text-primary"></i>
+                                <strong>Student ID:</strong> Valid student identification number
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-image me-2 text-success"></i>
+                                <strong>Profile Photo:</strong> Recent, clear photo (JPEG, PNG, or GIF format, max 5MB)
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-file-alt me-2 text-info"></i>
+                                <strong>Manifesto:</strong> A detailed statement outlining your:
+                                <ul class="mt-2">
+                                    <li>Vision and goals for the position</li>
+                                    <li>Relevant experience and qualifications</li>
+                                    <li>Planned initiatives and programs</li>
+                                    <li>How you plan to represent student interests</li>
+                                </ul>
+                            </li>
                         </ul>
                     </div>
 
@@ -531,33 +578,9 @@ if (isset($_SESSION['success_message'])): ?>
                                 <?php echo $applicationEnd > 0 ? date('F j, Y \a\t g:i A', $applicationEnd) : 'To be announced'; ?>
                             </li>
                             <li class="list-group-item">
-                                <i class="fas fa-info-circle me-2 text-info"></i>
-                                <strong>Requirements:</strong> 
-                                Must be a currently enrolled student with good academic standing
+                                <i class="fas fa-clock me-2 text-info"></i>
+                                <strong>Review Period:</strong> 48 hours after submission
                             </li>
-                            <li class="list-group-item">
-                                <i class="fas fa-exclamation-circle me-2 text-danger"></i>
-                                <strong>Important Note:</strong> 
-                                All required documents must be submitted before the deadline
-                            </li>
-                            <li class="list-group-item">
-                                <i class="fas fa-check-circle me-2 text-success"></i>
-                                <strong>Next Steps:</strong> 
-                                Candidates will be notified of their application status within 48 hours
-                            </li>
-                        </ul>
-                    </div>
-
-                    <!-- Required Documents -->
-                    <div class="col-12">
-                        <h6 class="fw-bold text-custom-primary">
-                            <i class="fas fa-file-alt me-2"></i>Required Documents
-                        </h6>
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item">Valid Student ID</li>
-                            <li class="list-group-item">Academic Transcript</li>
-                            <li class="list-group-item">Letter of Intent</li>
-                            <li class="list-group-item">Two Reference Letters</li>
                         </ul>
                     </div>
 
@@ -565,8 +588,13 @@ if (isset($_SESSION['success_message'])): ?>
                     <div class="col-12">
                         <div class="alert alert-info mb-0">
                             <i class="fas fa-info-circle me-2"></i>
-                            <strong>Note:</strong> All applications will be reviewed by the Election Committee. 
-                            Successful candidates will be notified via email within 48 hours of submission.
+                            <strong>Important Notes:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Ensure all information provided is accurate and truthful</li>
+                                <li>Your manifesto should be clear, concise, and professional</li>
+                                <li>Applications will be reviewed by the Election Committee</li>
+                                <li>You will be notified of your application status via email</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
@@ -666,6 +694,29 @@ if (isset($_SESSION['success_message'])): ?>
 
 .alert {
     animation: fadeIn 0.5s ease-out;
+}
+
+.position-details {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 7px;
+    margin-top: 0.5rem;
+    border-left: 3px solid var(--custom-primary-color);
+}
+
+.position-details small {
+    display: block;
+    line-height: 1.5;
+}
+
+.progress {
+    background-color: #e9ecef;
+    border-radius: 5px;
+}
+
+.availability-info {
+    font-size: 0.9rem;
+    color: #666;
 }
 </style>
 
