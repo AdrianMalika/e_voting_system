@@ -14,13 +14,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name']);
     $email = trim($_POST['email']);
     $student_number = trim($_POST['student_number']);
-    // Use the password from the form instead of generating a new one
+    $branch = trim($_POST['branch']);
+    $year_of_study = trim($_POST['year_of_study']);
     $password = trim($_POST['password']);
     $role = $_POST['role'] ?? 'student';
     $errors = [];
 
-    // Validate inputs: All fields except password are required now
-    if (empty($name) || empty($email) || empty($student_number) || empty($password)) {
+    // Validate inputs
+    if (empty($name) || empty($email) || empty($student_number) || empty($password) || empty($branch) || empty($year_of_study)) {
         $errors[] = "All fields are required.";
     }
 
@@ -40,11 +41,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($errors)) {
         // Insert new student into the database
-        $stmt = $conn->prepare("INSERT INTO users (name, email, student_number, password_hash, role) VALUES (?, ?, ?, ?, ?)");
+        $stmt = $conn->prepare("INSERT INTO users (name, email, student_number, branch, year_of_study, password_hash, role) VALUES (?, ?, ?, ?, ?, ?, ?)");
         
         try {
             $password_hash = password_hash($password, PASSWORD_DEFAULT);
-            $stmt->execute([$name, $email, $student_number, $password_hash, $role]);
+            $stmt->execute([$name, $email, $student_number, $branch, $year_of_study, $password_hash, $role]);
             
             // Send welcome email with the generated credentials
             require '../vendor/autoload.php';
@@ -79,6 +80,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div style='background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;'>
                             <p><strong>Email:</strong> {$email}</p>
                             <p><strong>Password:</strong> {$password}</p>
+                            <p><strong>Branch:</strong> {$branch}</p>
+                            <p><strong>Year of Study:</strong> {$year_of_study}</p>
                         </div>
                         <p>Please keep these credentials safe and do not share them with anyone.</p>
                         <p>You can login to the system by visiting our website and using these credentials.</p>
@@ -325,6 +328,25 @@ function generateSimplePassword() {
             background: #3b82f6;
             transition: width 0.3s ease;
         }
+
+        .cool-input[type="select"] {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1em;
+        }
+
+        .cool-input option {
+            padding: 0.5rem;
+            font-size: 1rem;
+        }
+
+        select.cool-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+            outline: none;
+        }
     </style>
 </head>
 <body>
@@ -421,6 +443,38 @@ function generateSimplePassword() {
                                         </label>
                                     </div>
                                     <div class="input-group">
+                                        <select name="branch" 
+                                                id="branch" 
+                                                class="cool-input peer"
+                                                required>
+                                            <option value="">Select Branch</option>
+                                            <option value="Blantyre">Blantyre</option>
+                                            <option value="Lilongwe">Lilongwe</option>
+                                        </select>
+                                        <label for="branch" 
+                                               class="floating-label">
+                                            Branch
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="input-container">
+                                    <div class="input-group">
+                                        <select name="year_of_study" 
+                                                id="year_of_study" 
+                                                class="cool-input peer"
+                                                required>
+                                            <option value="">Select Year of Study</option>
+                                            <option value="First Year">First Year</option>
+                                            <option value="Second Year">Second Year</option>
+                                            <option value="Third Year">Third Year</option>
+                                            <option value="Fourth Year">Fourth Year</option>
+                                        </select>
+                                        <label for="year_of_study" 
+                                               class="floating-label">
+                                            Year of Study
+                                        </label>
+                                    </div>
+                                    <div class="input-group">
                                         <select name="role" 
                                                 id="role" 
                                                 class="cool-input peer">
@@ -510,6 +564,14 @@ function generateSimplePassword() {
                                             <span id="confirm-student-number" class="font-medium text-gray-800"></span>
                                         </div>
                                         <div class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200">
+                                            <span class="text-gray-600 w-1/3">Branch:</span>
+                                            <span id="confirm-branch" class="font-medium text-gray-800"></span>
+                                        </div>
+                                        <div class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200">
+                                            <span class="text-gray-600 w-1/3">Year of Study:</span>
+                                            <span id="confirm-year" class="font-medium text-gray-800"></span>
+                                        </div>
+                                        <div class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200">
                                             <span class="text-gray-600 w-1/3">Role:</span>
                                             <span id="confirm-role" class="font-medium text-gray-800"></span>
                                         </div>
@@ -552,7 +614,7 @@ function generateSimplePassword() {
                                     <span class="text-sm text-gray-600" id="fields-remaining">All fields remaining</span>
                                 </div>
                             </div>
-                            <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="mt-4 grid grid-cols-2 md:grid-cols-6 gap-4">
                                 <div class="field-status p-2 rounded-lg bg-white shadow-sm">
                                     <div class="text-xs text-gray-500">Name</div>
                                     <div class="flex items-center">
@@ -568,10 +630,24 @@ function generateSimplePassword() {
                                     </div>
                                 </div>
                                 <div class="field-status p-2 rounded-lg bg-white shadow-sm">
-                                    <div class="text-xs text-gray-500">Student Number</div>
+                                    <div class="text-xs text-gray-500">Student NO.</div>
                                     <div class="flex items-center">
                                         <span id="student-number-status" class="w-2 h-2 rounded-full bg-gray-300 mr-2"></span>
                                         <span id="student-number-text" class="text-sm truncate">Not filled</span>
+                                    </div>
+                                </div>
+                                <div class="field-status p-2 rounded-lg bg-white shadow-sm">
+                                    <div class="text-xs text-gray-500">Branch</div>
+                                    <div class="flex items-center">
+                                        <span id="branch-status" class="w-2 h-2 rounded-full bg-gray-300 mr-2"></span>
+                                        <span id="branch-text" class="text-sm truncate">Not selected</span>
+                                    </div>
+                                </div>
+                                <div class="field-status p-2 rounded-lg bg-white shadow-sm">
+                                    <div class="text-xs text-gray-500">Year of Study</div>
+                                    <div class="flex items-center">
+                                        <span id="year-of-study-status" class="w-2 h-2 rounded-full bg-gray-300 mr-2"></span>
+                                        <span id="year-of-study-text" class="text-sm truncate">Not selected</span>
                                     </div>
                                 </div>
                                 <div class="field-status p-2 rounded-lg bg-white shadow-sm">
@@ -661,21 +737,20 @@ function generateSimplePassword() {
                             function nextStep(currentStep) {
                                 if (validateStep(currentStep)) {
                                     if (currentStep === 3) {
-                                        // Update confirmation details before showing step 4
                                         document.getElementById('confirm-name').textContent = document.getElementById('name').value;
                                         document.getElementById('confirm-email').textContent = document.getElementById('email').value;
                                         document.getElementById('confirm-student-number').textContent = document.getElementById('student_number').value;
+                                        document.getElementById('confirm-branch').textContent = document.getElementById('branch').value;
+                                        document.getElementById('confirm-year').textContent = document.getElementById('year_of_study').value;
                                         document.getElementById('confirm-role').textContent = document.getElementById('role').value;
                                     }
                                     showStep(currentStep + 1);
-                                    // Update progress bar when moving to next step
                                     updateProgressBar();
                                 }
                             }
 
                             function prevStep(currentStep) {
                                 showStep(currentStep - 1);
-                                // Update progress bar when moving to previous step
                                 updateProgressBar();
                             }
 
@@ -704,6 +779,8 @@ function generateSimplePassword() {
                                             <p><strong>Name:</strong> ${document.getElementById('name').value}</p>
                                             <p><strong>Email:</strong> ${document.getElementById('email').value}</p>
                                             <p><strong>Student Number:</strong> ${document.getElementById('student_number').value}</p>
+                                            <p><strong>Branch:</strong> ${document.getElementById('branch').value}</p>
+                                            <p><strong>Year of Study:</strong> ${document.getElementById('year_of_study').value}</p>
                                             <p><strong>Role:</strong> ${document.getElementById('role').value}</p>
                                         </div>
                                     `,
@@ -751,14 +828,16 @@ function generateSimplePassword() {
                                     'name': document.getElementById('name'),
                                     'email': document.getElementById('email'),
                                     'student_number': document.getElementById('student_number'),
+                                    'branch': document.getElementById('branch'),
+                                    'year_of_study': document.getElementById('year_of_study'),
                                     'password': document.getElementById('password')
                                 };
 
                                 for (const [fieldName, element] of Object.entries(fields)) {
                                     if (!element) continue;
 
-                                    const status = document.getElementById(`${fieldName.replace('_', '-')}-status`);
-                                    const text = document.getElementById(`${fieldName.replace('_', '-')}-text`);
+                                    const status = document.getElementById(`${fieldName.replace(/_/g, '-')}-status`);
+                                    const text = document.getElementById(`${fieldName.replace(/_/g, '-')}-text`);
                                     
                                     if (!status || !text) continue;
                                     
@@ -768,13 +847,22 @@ function generateSimplePassword() {
                                         
                                         if (fieldName === 'password') {
                                             text.textContent = '••••••••';
+                                        } else if (fieldName === 'year_of_study') {
+                                            // Special handling for year of study select
+                                            text.textContent = element.options[element.selectedIndex].text;
                                         } else {
                                             text.textContent = element.value.trim();
                                         }
                                     } else {
                                         status.classList.remove('bg-green-500');
                                         status.classList.add('bg-gray-300');
-                                        text.textContent = 'Not filled';
+                                        
+                                        // Custom "not selected" message for dropdowns
+                                        if (element.tagName === 'SELECT') {
+                                            text.textContent = 'Not selected';
+                                        } else {
+                                            text.textContent = 'Not filled';
+                                        }
                                     }
                                 }
                             }
