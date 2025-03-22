@@ -65,6 +65,7 @@ $students = $stmt->fetchAll();
     <title>Manage Students</title>
     <!-- jQuery for AJAX -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         /* Modal Styling */
         #overlay {
@@ -170,51 +171,228 @@ $students = $stmt->fetchAll();
         .table-responsive {
             overflow-x: auto;
         }
+        .bg-gradient-primary {
+            background: linear-gradient(45deg, #2c3e50, #3498db);
+        }
+        .text-primary {
+            color: #2c3e50 !important;
+        }
+        .card {
+            border-radius: 0.5rem;
+            border: none;
+        }
+        .shadow-hover {
+            transition: all 0.3s ease;
+        }
+        .shadow-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            border: none;
+        }
+        .btn-edit {
+            background-color: #3498db;
+            color: white;
+        }
+        .btn-delete {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+        }
+        #editModal {
+            background: white;
+            border-radius: 0.5rem;
+        }
+        #editModal input {
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            transition: all 0.3s ease;
+        }
+        #editModal input:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+        #Modal {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        #closeModal {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        .table th {
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        .input-group-text {
+            border-radius: 0.5rem 0 0 0.5rem;
+        }
+        #studentSearch {
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+        #studentSearch:focus {
+            border-color: #3498db;
+            box-shadow: none;
+        }
+        /* New Search Bar Styles */
+        .search-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto;
+            max-width: 600px;
+        }
+        .search-box {
+            width: 100%;
+            position: relative;
+            background: white;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            padding: 5px;
+            transition: all 0.3s ease;
+        }
+        .search-box:hover, .search-box:focus-within {
+            box-shadow: 0 6px 20px rgba(44, 62, 80, 0.15);
+            transform: translateY(-2px);
+        }
+        .search-input {
+            width: 100%;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            color: #2c3e50;
+            background: transparent;
+            outline: none;
+        }
+        .search-input::placeholder {
+            color: #95a5a6;
+            font-weight: 400;
+        }
+        .search-button {
+            background: linear-gradient(45deg, #2c3e50, #3498db);
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            margin-right: 5px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        .search-button:hover {
+            transform: rotate(90deg);
+            background: linear-gradient(45deg, #3498db, #2c3e50);
+        }
+        .search-button i {
+            font-size: 18px;
+        }
+        /* Optional: Add animation for the search icon */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .search-box:focus-within .search-button i {
+            animation: pulse 1s infinite;
+        }
     </style>
 </head>
 <body>
 
-<div class="container my-4">
-    <h2 class="text-center mb-4">Manage Students</h2>
+<div class="container-fluid py-4">
+    <!-- Dashboard Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="bg-gradient-primary text-white p-4 rounded-3 shadow">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="display-6 mb-1">Manage Students</h2>
+                        <p class="lead mb-0">View and manage all student accounts</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover" id="student-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Student Number</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($students as $student): ?>
-                            <tr id="row-<?php echo $student['id']; ?>">
-                                <td><?php echo htmlspecialchars($student['id']); ?></td>
-                                <td class="name"><?php echo htmlspecialchars($student['name']); ?></td>
-                                <td class="email"><?php echo htmlspecialchars($student['email']); ?></td>
-                                <td class="student_number"><?php echo htmlspecialchars($student['student_number']); ?></td>
-                                <td>
-                                    <div class="d-flex flex-wrap gap-2">
-                                        <button class="btn btn-edit" 
-                                                data-id="<?php echo $student['id']; ?>" 
-                                                data-name="<?php echo $student['name']; ?>" 
-                                                data-email="<?php echo $student['email']; ?>" 
-                                                data-student_number="<?php echo $student['student_number']; ?>">
-                                            Edit
-                                        </button>
-                                        <button class="btn btn-delete" data-id="<?php echo $student['id']; ?>">
-                                            Delete
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+    <!-- Search Bar -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="search-wrapper">
+                <div class="search-box">
+                    <input type="text" id="studentSearch" class="search-input" placeholder="Search students...">
+                    <button class="search-button">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Students Table Card -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="student-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Student Number</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($students as $student): ?>
+                                    <tr id="row-<?php echo $student['id']; ?>">
+                                        <td><?php echo htmlspecialchars($student['id']); ?></td>
+                                        <td class="name"><?php echo htmlspecialchars($student['name']); ?></td>
+                                        <td class="email"><?php echo htmlspecialchars($student['email']); ?></td>
+                                        <td class="student_number"><?php echo htmlspecialchars($student['student_number']); ?></td>
+                                        <td>
+                                            <div class="d-flex flex-wrap gap-2">
+                                                <button class="btn btn-edit" 
+                                                        data-id="<?php echo $student['id']; ?>" 
+                                                        data-name="<?php echo $student['name']; ?>" 
+                                                        data-email="<?php echo $student['email']; ?>" 
+                                                        data-student_number="<?php echo $student['student_number']; ?>">
+                                                    Edit
+                                                </button>
+                                                <button class="btn btn-delete" data-id="<?php echo $student['id']; ?>">
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -313,6 +491,37 @@ $(document).ready(function () {
                     }
                 }
             });
+        }
+    });
+
+    // Enhanced search functionality
+    $("#studentSearch").on("keyup", function() {
+        var value = $(this).val().toLowerCase();
+        $("#student-table tbody tr").each(function() {
+            var text = $(this).text().toLowerCase();
+            $(this).toggle(text.indexOf(value) > -1);
+        });
+
+        // Add no results message
+        if($("#student-table tbody tr:visible").length === 0) {
+            if($("#no-results").length === 0) {
+                $("#student-table tbody").append(
+                    '<tr id="no-results"><td colspan="5" class="text-center py-4">' +
+                    '<div class="text-muted">' +
+                    '<i class="fas fa-search mb-2" style="font-size: 24px;"></i>' +
+                    '<p class="mb-0">No students found matching your search</p>' +
+                    '</div></td></tr>'
+                );
+            }
+        } else {
+            $("#no-results").remove();
+        }
+    });
+
+    // Optional: Clear search on ESC key
+    $(document).keyup(function(e) {
+        if (e.key === "Escape") {
+            $("#studentSearch").val("").trigger("keyup");
         }
     });
 });

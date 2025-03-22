@@ -1,272 +1,306 @@
 <?php
 require_once '../includes/header.php';
-require_once '../includes/notifications.php';
 
-// Ensure user is logged in and is a student
-if (!isset($_SESSION['user_id']) || $user['role'] !== 'student') {
+// Ensure user is admin
+if (!isset($_SESSION['user_id']) || $user['role'] !== 'admin') {
     header("Location: ../login.php");
     exit();
 }
 
 // Get election ID from URL
-$election_id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT);
+$election_id = filter_input(INPUT_GET, 'election_id', FILTER_SANITIZE_NUMBER_INT);
 if (!$election_id) {
     $_SESSION['error'] = "Invalid election ID";
-    header("Location: elections.php");
+    header("Location: manage_elections.php");
     exit();
 }
 
 // Get election details
 $stmt = $conn->prepare("
-    SELECT e.*, 
-           (SELECT COUNT(*) FROM votes v WHERE v.election_id = e.id) as total_votes,
-           (SELECT COUNT(*) FROM votes v WHERE v.election_id = e.id AND v.voter_id = ?) as has_voted
-    FROM elections e 
-    WHERE e.id = ?
+    SELECT * FROM elections WHERE id = ?
 ");
-$stmt->execute([$_SESSION['user_id'], $election_id]);
+$stmt->execute([$election_id]);
 $election = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$election) {
     $_SESSION['error'] = "Election not found";
-    header("Location: elections.php");
+    header("Location: manage_elections.php");
     exit();
 }
 
-// Pagination setup
-$items_per_page = 6;
-$page = filter_input(INPUT_GET, 'page', FILTER_SANITIZE_NUMBER_INT) ?: 1;
-$offset = ($page - 1) * $items_per_page;
-
-// Get candidates for this election
+// Get all approved nominees for this election
 $stmt = $conn->prepare("
-    SELECT c.*, 
-           c.photo_url AS profile_photo,
-           u.name AS full_name,
-           (SELECT COUNT(*) FROM votes v WHERE v.candidate_id = c.id) as vote_count
-    FROM election_candidates ec
-    LEFT JOIN candidates c ON ec.candidate_id = c.id
-    LEFT JOIN users u ON c.id = u.id
-    WHERE ec.election_id = :election_id
-    ORDER BY ec.created_at ASC
-    LIMIT :limit OFFSET :offset
+    SELECT 
+        n.nomination_id,
+        n.first_name,
+        n.surname,
+        n.email,
+        n.phone,
+        n.student_id,
+        n.program,
+        n.year_of_study,
+        n.role,
+        n.branch,
+        n.photo_path,
+        n.manifesto,
+        n.submission_date
+    FROM nominations n
+    WHERE n.election_id = ?
+    AND n.status = 'approved'
+    ORDER BY n.role, n.first_name
 ");
-
-// Bind parameters as named parameters
-$stmt->bindValue(':election_id', $election_id, PDO::PARAM_INT);
-$stmt->bindValue(':limit', (int)$items_per_page, PDO::PARAM_INT);
-$stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
-
-// Execute the query
-$stmt->execute();
-
-
-// Get total candidate count
-$stmt = $conn->prepare("SELECT COUNT(*) FROM election_candidates WHERE election_id = ?");
 $stmt->execute([$election_id]);
-$total_candidates = $stmt->fetchColumn();
-$total_pages = ceil($total_candidates / $items_per_page);
-
-// Handle voting
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['vote'])) {
-    $candidate_id = filter_input(INPUT_POST, 'candidate_id', FILTER_SANITIZE_NUMBER_INT);
-    
-    if (!$candidate_id) {
-        $_SESSION['error'] = "Please select a candidate";
-    } else if ($election['has_voted'] > 0) {
-        $_SESSION['error'] = "You have already voted in this election";
-    } else if ($election['status'] !== 'active') {
-        $_SESSION['error'] = "This election is not currently active";
-    } else {
-        try {
-            $conn->beginTransaction();
-            
-            // Record the vote
-            $stmt = $conn->prepare("
-                INSERT INTO votes (election_id, candidate_id, voter_id, created_at)
-                VALUES (?, ?, ?, NOW())
-            ");
-            $stmt->execute([$election_id, $candidate_id, $_SESSION['user_id']]);
-            
-            // Add notification
-            add_notification(
-                $conn,
-                'vote_cast',
-                "You have successfully cast your vote in the election: " . $election['title'],
-                $election_id,
-                'election',
-                $_SESSION['user_id']
-            );
-            
-            $conn->commit();
-            $_SESSION['success'] = "Your vote has been recorded successfully";
-            header("Location: view_election.php?id=" . $election_id);
-            exit();
-        } catch (Exception $e) {
-            $conn->rollBack();
-            $_SESSION['error'] = "Error recording vote: " . $e->getMessage();
-        }
-    }
-}
-
-// Calculate time remaining or time until start
-$now = new DateTime();
-$start = new DateTime($election['start_date']);
-$end = new DateTime($election['end_date']);
-
-$time_status = '';
-if ($now < $start) {
-    $interval = $now->diff($start);
-    $time_status = "Starts in " . format_interval($interval);
-} else if ($now <= $end) {
-    $interval = $now->diff($end);
-    $time_status = "Ends in " . format_interval($interval);
-} else {
-    $time_status = "Election ended";
-}
-
-// Helper function to format time interval
-function format_interval($interval) {
-    if ($interval->days > 0) {
-        return $interval->format('%d days, %h hours');
-    } else if ($interval->h > 0) {
-        return $interval->format('%h hours, %i minutes');
-    } else {
-        return $interval->format('%i minutes');
-    }
-}
+$nominees = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
-<div class="container py-4">
-    <div class="mb-4">
-        <a href="elections.php" class="btn btn-secondary">
-            <i class="fas fa-arrow-left me-2"></i>Back to Elections
-        </a>
-    </div>
-
-    <?php if (isset($_SESSION['success'])): ?>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <?php 
-                echo $_SESSION['success'];
-                unset($_SESSION['success']);
-            ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    <?php endif; ?>
-
-    <?php if (isset($_SESSION['error'])): ?>
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <?php 
-                echo $_SESSION['error'];
-                unset($_SESSION['error']);
-            ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    <?php endif; ?>
-
-    <div class="card mb-4">
-        <div class="card-body">
-            <h2 class="card-title"><?php echo htmlspecialchars($election['title']); ?></h2>
-            <p class="card-text"><?php echo nl2br(htmlspecialchars($election['description'])); ?></p>
-            
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <i class="fas fa-calendar-alt text-primary me-2"></i>
-                        <strong>Start Date:</strong> <?php echo date('M j, Y g:i A', strtotime($election['start_date'])); ?>
+<div class="container-fluid py-4">
+    <!-- Enhanced Header -->
+   <!-- Enhanced Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card bg-gradient-primary text-white shadow-lg rounded-4 border-0">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="display-6 mb-2"><?php echo htmlspecialchars($election['title']); ?></h2>
+                        <div class="d-flex gap-4">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-users me-2"></i>
+                                <span><?php echo count($nominees); ?> Candidates</span>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-calendar me-2"></i>
+                                <span><?php echo date('M j, Y', strtotime($election['start_date'])); ?> - <?php echo date('M j, Y', strtotime($election['end_date'])); ?></span>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-clock me-2"></i>
+                                <span><?php echo ucfirst($election['status']); ?></span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <i class="fas fa-calendar-check text-primary me-2"></i>
-                        <strong>End Date:</strong> <?php echo date('M j, Y g:i A', strtotime($election['end_date'])); ?>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <i class="fas fa-clock text-primary me-2"></i>
-                        <strong>Status:</strong> 
-                        <span class="badge bg-<?php echo $election['status'] === 'active' ? 'success' : 'secondary'; ?>">
-                            <?php echo ucfirst($election['status']); ?>
-                        </span>
-                    </div>
-                    <div class="mb-3">
-                        <i class="fas fa-hourglass-half text-primary me-2"></i>
-                        <strong>Time Status:</strong> <?php echo $time_status; ?>
-                    </div>
+                    <a href="manage_elections.php" class="btn btn-light btn-lg rounded-pill">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Elections
+                    </a>
                 </div>
             </div>
         </div>
     </div>
+</div>
+    </div>
 
-    <?php if (!empty($candidates)): ?>
-        <h3 class="mb-4">Candidates</h3>
-        <div class="row">
-            <?php foreach ($candidates as $candidate): ?>
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card h-100">
-                        <?php if ($candidate['profile_photo']): ?>
-                            <img src="<?php echo htmlspecialchars($candidate['profile_photo']); ?>" 
-                                 class="card-img-top candidate-photo" 
-                                 alt="<?php echo htmlspecialchars($candidate['full_name']); ?>">
-                        <?php else: ?>
-                            <div class="card-img-top candidate-photo-placeholder">
-                                <i class="fas fa-user-circle"></i>
+    <!-- Candidates Section -->
+    <?php if (!empty($nominees)): ?>
+        <?php 
+        $current_role = '';
+        $positions = [];
+        foreach ($nominees as $nominee) {
+            if (!isset($positions[$nominee['role']])) {
+                $positions[$nominee['role']] = [];
+            }
+            $positions[$nominee['role']][] = $nominee;
+        }
+        ?>
+
+        <!-- Position Tabs -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body">
+                <ul class="nav nav-pills mb-4" id="positionTabs" role="tablist">
+                    <?php $first = true; foreach ($positions as $role => $roleNominees): ?>
+                    <li class="nav-item me-2" role="presentation">
+                        <button class="nav-link <?php echo $first ? 'active' : ''; ?>" 
+                                id="<?php echo sanitize_id($role); ?>-tab"
+                                data-bs-toggle="pill"
+                                data-bs-target="#<?php echo sanitize_id($role); ?>"
+                                type="button"
+                                role="tab">
+                            <?php echo htmlspecialchars($role); ?> 
+                            <span class="badge bg-primary ms-2"><?php echo count($roleNominees); ?></span>
+                        </button>
+                    </li>
+                    <?php $first = false; endforeach; ?>
+                </ul>
+
+                <div class="tab-content" id="positionTabContent">
+                    <?php $first = true; foreach ($positions as $role => $roleNominees): ?>
+                    <div class="tab-pane fade <?php echo $first ? 'show active' : ''; ?>" 
+                         id="<?php echo sanitize_id($role); ?>" 
+                         role="tabpanel">
+                        <div class="row g-4">
+                            <?php foreach ($roleNominees as $nominee): ?>
+                            <div class="col-md-4">
+                                <div class="card h-100 border-0 shadow-sm hover-shadow">
+                                    <div class="position-relative">
+                                        <?php if ($nominee['photo_path']): ?>
+                                            <img src="<?php echo htmlspecialchars($nominee['photo_path']); ?>" 
+                                                 class="card-img-top candidate-photo" 
+                                                 alt="<?php echo htmlspecialchars($nominee['first_name'] . ' ' . $nominee['surname']); ?>">
+                                        <?php else: ?>
+                                            <div class="card-img-top candidate-photo-placeholder">
+                                                <i class="fas fa-user-circle"></i>
+                                            </div>
+                                        <?php endif; ?>
+                                        <div class="position-absolute top-0 end-0 m-3">
+                                            <span class="badge bg-primary rounded-pill">
+                                                <?php echo htmlspecialchars($nominee['branch']); ?>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">
+                                            <?php echo htmlspecialchars($nominee['first_name'] . ' ' . $nominee['surname']); ?>
+                                        </h5>
+                                        <div class="d-flex flex-column gap-2 mb-3">
+                                            <div class="d-flex align-items-center text-muted">
+                                                <i class="fas fa-graduation-cap me-2"></i>
+                                                <span><?php echo htmlspecialchars($nominee['program']); ?></span>
+                                            </div>
+                                            <div class="d-flex align-items-center text-muted">
+                                                <i class="fas fa-envelope me-2"></i>
+                                                <span><?php echo htmlspecialchars($nominee['email']); ?></span>
+                                            </div>
+                                            <div class="d-flex align-items-center text-muted">
+                                                <i class="fas fa-phone me-2"></i>
+                                                <span><?php echo htmlspecialchars($nominee['phone']); ?></span>
+                                            </div>
+                                        </div>
+                                        <button class="btn btn-outline-primary w-100" data-bs-toggle="modal" 
+                                                data-bs-target="#manifesto-<?php echo $nominee['nomination_id']; ?>">
+                                            <i class="fas fa-file-alt me-2"></i>View Manifesto
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                        <?php endif; ?>
-                        
-                        <div class="card-body">
-                            <h5 class="card-title"><?php echo htmlspecialchars($candidate['full_name']); ?></h5>
-                            <p class="card-text"><?php echo nl2br(htmlspecialchars($candidate['platform'])); ?></p>
-                            
-                            <?php if ($election['status'] === 'active' && !$election['has_voted']): ?>
-                                <form method="post" class="mt-3">
-                                    <input type="hidden" name="vote" value="1">
-                                    <input type="hidden" name="candidate_id" value="<?php echo $candidate['id']; ?>">
-                                    <button type="submit" class="btn btn-primary w-100" 
-                                            onclick="return confirm('Are you sure you want to vote for <?php echo htmlspecialchars($candidate['full_name']); ?>?')">
-                                        <i class="fas fa-vote-yea me-2"></i>Vote
-                                    </button>
-                                </form>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    <?php $first = false; endforeach; ?>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manifesto Modals -->
+        <?php foreach ($nominees as $nominee): ?>
+        <div class="modal fade" id="manifesto-<?php echo $nominee['nomination_id']; ?>" tabindex="-1">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content border-0">
+                    <div class="modal-header bg-gradient-primary text-white">
+                        <h5 class="modal-title">Candidate Manifesto</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="d-flex align-items-center mb-4">
+                            <?php if ($nominee['photo_path']): ?>
+                                <img src="<?php echo htmlspecialchars($nominee['photo_path']); ?>" 
+                                     class="rounded-circle me-3" 
+                                     style="width: 64px; height: 64px; object-fit: cover;"
+                                     alt="<?php echo htmlspecialchars($nominee['first_name'] . ' ' . $nominee['surname']); ?>">
                             <?php endif; ?>
+                            <div>
+                                <h4 class="mb-1"><?php echo htmlspecialchars($nominee['first_name'] . ' ' . $nominee['surname']); ?></h4>
+                                <p class="text-muted mb-0"><?php echo htmlspecialchars($nominee['role']); ?></p>
+                            </div>
+                        </div>
+                        <div class="bg-light p-4 rounded-3">
+                            <?php echo nl2br(htmlspecialchars($nominee['manifesto'])); ?>
                         </div>
                     </div>
                 </div>
-            <?php endforeach; ?>
+            </div>
         </div>
+        <?php endforeach; ?>
 
-        <!-- Pagination -->
-        <nav>
-            <ul class="pagination justify-content-center">
-                <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                    <li class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
-                        <a class="page-link" href="?id=<?php echo $election_id; ?>&page=<?php echo $i; ?>">
-                            <?php echo $i; ?>
-                        </a>
-                    </li>
-                <?php endfor; ?>
-            </ul>
-        </nav>
     <?php else: ?>
-        <div class="alert alert-info">
-            <i class="fas fa-info-circle me-2"></i>No candidates have been registered for this election yet.
+        <div class="alert alert-info shadow-sm border-0">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-info-circle fa-2x me-3"></i>
+                <div>
+                    <h4 class="alert-heading mb-1">No Candidates Yet</h4>
+                    <p class="mb-0">No approved candidates found for this election.</p>
+                </div>
+            </div>
         </div>
     <?php endif; ?>
 </div>
 
-<style>
-.candidate-photo {
-    height: 200px;
-    object-fit: cover;
+<?php
+// Helper function to create valid IDs for tabs
+function sanitize_id($string) {
+    return preg_replace('/[^a-z0-9]/i', '_', strtolower($string));
 }
+?>
+
+<style>
+:root {
+    --primary-color: #2c3e50;
+    --primary-light: #3498db;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(45deg, var(--primary-color), var(--primary-light));
+}
+
+.card {
+    border-radius: 1rem;
+    transition: all 0.3s ease;
+}
+
+.hover-shadow:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 1rem 3rem rgba(0,0,0,.175)!important;
+}
+
+.candidate-photo {
+    height: 250px;
+    object-fit: cover;
+    border-top-left-radius: 1rem;
+    border-top-right-radius: 1rem;
+}
+
 .candidate-photo-placeholder {
-    height: 200px;
+    height: 250px;
     background-color: #f8f9fa;
     display: flex;
     align-items: center;
     justify-content: center;
+    border-top-left-radius: 1rem;
+    border-top-right-radius: 1rem;
 }
-.candidate-photo-placeholder i {
-    font-size: 5rem;
-    color: #dee2e6;
+
+.nav-pills .nav-link {
+    border-radius: 2rem;
+    padding: 0.75rem 1.5rem;
+    color: var(--primary-color);
+}
+
+.nav-pills .nav-link.active {
+    background-color: var(--primary-color);
+}
+
+.icon-box {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.modal-content {
+    border-radius: 1rem;
+}
+
+.modal-header {
+    border-top-left-radius: 1rem;
+    border-top-right-radius: 1rem;
+}
+
+@media (max-width: 768px) {
+    .display-6 {
+        font-size: 1.5rem;
+    }
+    .lead {
+        font-size: 1rem;
+    }
 }
 </style>
 

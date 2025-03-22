@@ -13,20 +13,35 @@ $stmt->execute();
 $applicationPeriod = $stmt->fetch(PDO::FETCH_ASSOC) ?: ['end' => 0];
 $applicationEnd = $applicationPeriod['end'];
 
-// Add this after your existing database queries at the top of the file
+// Replace the existing position query with this one
 $stmt = $conn->prepare("
-    SELECT DISTINCT position_name
+    SELECT DISTINCT ep.position_name, ep.election_id, e.title as election_title, 
+           e.start_date, e.end_date
     FROM election_positions ep
     JOIN elections e ON ep.election_id = e.id
-    WHERE e.status IN ('upcoming', 'active', 'completed')
-    ORDER BY position_name
+    WHERE e.status = 'upcoming'
+    ORDER BY e.start_date ASC, ep.position_name ASC
 ");
-
 $stmt->execute();
-$available_positions = $stmt->fetchAll(PDO::FETCH_COLUMN);
+$positions = $stmt->fetchAll();
+
+// Group positions by election
+$elections_with_positions = [];
+foreach ($positions as $pos) {
+    if (!isset($elections_with_positions[$pos['election_id']])) {
+        $elections_with_positions[$pos['election_id']] = [
+            'id' => $pos['election_id'],
+            'title' => $pos['election_title'],
+            'start_date' => $pos['start_date'],
+            'end_date' => $pos['end_date'],
+            'positions' => []
+        ];
+    }
+    $elections_with_positions[$pos['election_id']]['positions'][] = $pos['position_name'];
+}
 
 // Check if there are any available positions
-$hasAvailablePositions = !empty($available_positions);
+$hasAvailablePositions = !empty($positions);
 
 // Update the isApplicationOpen check to only use end time
 $currentTimestamp = time();
@@ -113,6 +128,21 @@ function createUploadDirectories() {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
+        // Add election_id to required fields validation
+        if (empty($_POST['election_id'])) {
+            throw new Exception("Please select an election");
+        }
+
+        // Validate that the election exists and is upcoming
+        $stmt = $conn->prepare("
+            SELECT id FROM elections 
+            WHERE id = ? AND status = 'upcoming'
+        ");
+        $stmt->execute([$_POST['election_id']]);
+        if (!$stmt->fetch()) {
+            throw new Exception("Invalid or closed election selected");
+        }
+
         // Initialize error array
         $errors = [];
 
@@ -221,13 +251,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Insert nomination into database using PDO
                 $query = "INSERT INTO nominations (
-                    user_id, first_name, surname, email, phone, 
+                    user_id, election_id, first_name, surname, email, phone, 
                     student_id, program, year_of_study, role, 
-                    branch, photo_path, manifesto, submission_date
+                    branch, photo_path, manifesto, status, submission_date
                 ) VALUES (
-                    :user_id, :first_name, :surname, :email, :phone,
+                    :user_id, :election_id, :first_name, :surname, :email, :phone,
                     :student_id, :program, :year_of_study, :role,
-                    :branch, :photo_path, :manifesto, NOW()
+                    :branch, :photo_path, :manifesto, 'pending', NOW()
                 )";
 
                 $stmt = $conn->prepare($query);
@@ -235,6 +265,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Bind parameters using PDO named parameters
                 $stmt->execute([
                     ':user_id' => $_SESSION['user_id'],
+                    ':election_id' => $_POST['election_id'],
                     ':first_name' => $firstName,
                     ':surname' => $surname,
                     ':email' => $email,
@@ -455,20 +486,28 @@ if (isset($_SESSION['success_message'])): ?>
                                 <i class="fas fa-briefcase me-2"></i>Position Information
                             </h5>
                             <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="role" class="form-label">Position Applying For</label>
-                                    <select id="role" name="role" class="form-select" required>
-                                        <option value="">Select Position</option>
-                                        <?php foreach ($available_positions as $position): ?>
-                                            <option value="<?php echo htmlspecialchars($position); ?>">
-                                                <?php echo htmlspecialchars($position); ?>
+                                <div class="col-md-12">
+                                    <label for="election_id" class="form-label">Select Election</label>
+                                    <select class="form-select" id="election_id" name="election_id" required>
+                                        <option value="">Choose an election...</option>
+                                        <?php foreach ($elections_with_positions as $election): ?>
+                                            <option value="<?php echo $election['id']; ?>">
+                                                <?php echo htmlspecialchars($election['title']); ?> 
+                                                (<?php echo date('M j, Y', strtotime($election['start_date'])); ?> - 
+                                                <?php echo date('M j, Y', strtotime($election['end_date'])); ?>)
                                             </option>
                                         <?php endforeach; ?>
                                     </select>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="branch" class="form-label">Campus Branch</label>
-                                    <select id="branch" name="branch" class="form-select" required>
+                                    <label for="role" class="form-label">Position</label>
+                                    <select class="form-select" id="role" name="role" required disabled>
+                                        <option value="">First select an election...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="branch" class="form-label">Branch</label>
+                                    <select class="form-select" id="branch" name="branch" required>
                                         <option value="">Select Branch</option>
                                         <option value="Blantyre">Blantyre</option>
                                         <option value="Lilongwe">Lilongwe</option>
@@ -818,6 +857,26 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+const electionsData = <?php echo json_encode($elections_with_positions); ?>;
+
+document.getElementById('election_id').addEventListener('change', function() {
+    const roleSelect = document.getElementById('role');
+    roleSelect.innerHTML = '<option value="">Select Position</option>';
+    
+    if (this.value) {
+        const positions = electionsData[this.value].positions;
+        positions.forEach(position => {
+            const option = document.createElement('option');
+            option.value = position;
+            option.textContent = position;
+            roleSelect.appendChild(option);
+        });
+        roleSelect.disabled = false;
+    } else {
+        roleSelect.disabled = true;
+    }
+});
 </script>
 
 <?php require_once '../includes/footer.php'; ?>

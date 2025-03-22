@@ -81,15 +81,15 @@ $stmt = $conn->prepare("
         COUNT(DISTINCT v.id) as total_votes,
         (
             SELECT COUNT(*) 
-            FROM election_candidates ec 
-            WHERE ec.election_id = e.id 
-            AND ec.status = 'approved'
+            FROM nominations n 
+            WHERE n.election_id = e.id 
+            AND n.status = 'approved'
         ) as approved_candidates,
         (
             SELECT COUNT(*) 
-            FROM election_candidates ec 
-            WHERE ec.election_id = e.id 
-            AND ec.status = 'pending'
+            FROM nominations n 
+            WHERE n.election_id = e.id 
+            AND n.status = 'pending'
         ) as pending_candidates,
         (
             SELECT COUNT(DISTINCT voter_id) 
@@ -262,7 +262,7 @@ if (isset($_GET['view_requests']) && is_numeric($_GET['view_requests'])) {
                                 </div>
                             </div>
                             <div class="col-6">
-                                <a href="view_candidates.php?election_id=<?php echo $election['id']; ?>" class="btn btn-outline-primary btn-sm w-100">
+                                <a href="view_election.php?election_id=<?php echo $election['id']; ?>" class="btn btn-outline-primary btn-sm w-100">
                                     <i class="fas fa-users me-2"></i>View Candidates
                                 </a>
                             </div>
