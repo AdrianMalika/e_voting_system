@@ -7,38 +7,86 @@ if (!isset($_SESSION['user_id']) || !in_array($user['role'], ['student', 'candid
     exit();
 }
 
+try {
+    // Get user's branch
+    $stmt = $conn->prepare("SELECT branch FROM users WHERE id = ?");
+    $stmt->execute([$_SESSION['user_id']]);
+    $userBranch = $stmt->fetch(PDO::FETCH_ASSOC)['branch'];
+
+    // Get elections only for user's branch
+    $stmt = $conn->prepare("
+        SELECT DISTINCT 
+            ep.position_name, 
+            ep.election_id, 
+            e.title as election_title, 
+            e.start_date, 
+            e.end_date,
+            e.branch
+        FROM election_positions ep
+        JOIN elections e ON ep.election_id = e.id
+        WHERE e.status = 'upcoming'
+        AND e.branch = ?
+        ORDER BY e.start_date ASC, ep.position_name ASC
+    ");
+    $stmt->execute([$userBranch]);
+    $positions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // If no elections available for user's branch, show message and exit
+    if (empty($positions)) {
+        ?>
+        <div class="container py-5">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body text-center p-5">
+                            <i class="fas fa-info-circle fa-3x text-info mb-3"></i>
+                            <h3>No Available Elections</h3>
+                            <p class="lead text-muted">
+                                There are currently no elections available for the <?php echo htmlspecialchars($userBranch); ?> branch.
+                            </p>
+                            <a href="../dashboard.php" class="btn btn-primary mt-3">
+                                <i class="fas fa-arrow-left me-2"></i>Return to Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+        require_once '../includes/footer.php';
+        exit();
+    }
+
+    // Group elections with positions
+    $elections_with_positions = [];
+    foreach ($positions as $pos) {
+        if (!isset($elections_with_positions[$pos['election_id']])) {
+            $elections_with_positions[$pos['election_id']] = [
+                'id' => $pos['election_id'],
+                'title' => $pos['election_title'],
+                'start_date' => $pos['start_date'],
+                'end_date' => $pos['end_date'],
+                'branch' => $pos['branch'],
+                'positions' => []
+            ];
+        }
+        if (!in_array($pos['position_name'], $elections_with_positions[$pos['election_id']]['positions'])) {
+            $elections_with_positions[$pos['election_id']]['positions'][] = $pos['position_name'];
+        }
+    }
+
+} catch (Exception $e) {
+    $_SESSION['error_message'] = "An unexpected error occurred. Please try again.";
+    error_log("Error in nomination form: " . $e->getMessage());
+    header("Location: ../dashboard.php");
+    exit();
+}
+
 // Load application period from the database
 $stmt = $conn->prepare("SELECT end FROM application_period ORDER BY id DESC LIMIT 1");
 $stmt->execute();
 $applicationPeriod = $stmt->fetch(PDO::FETCH_ASSOC) ?: ['end' => 0];
 $applicationEnd = $applicationPeriod['end'];
-
-// Replace the existing position query with this one
-$stmt = $conn->prepare("
-    SELECT DISTINCT ep.position_name, ep.election_id, e.title as election_title, 
-           e.start_date, e.end_date
-    FROM election_positions ep
-    JOIN elections e ON ep.election_id = e.id
-    WHERE e.status = 'upcoming'
-    ORDER BY e.start_date ASC, ep.position_name ASC
-");
-$stmt->execute();
-$positions = $stmt->fetchAll();
-
-// Group positions by election
-$elections_with_positions = [];
-foreach ($positions as $pos) {
-    if (!isset($elections_with_positions[$pos['election_id']])) {
-        $elections_with_positions[$pos['election_id']] = [
-            'id' => $pos['election_id'],
-            'title' => $pos['election_title'],
-            'start_date' => $pos['start_date'],
-            'end_date' => $pos['end_date'],
-            'positions' => []
-        ];
-    }
-    $elections_with_positions[$pos['election_id']]['positions'][] = $pos['position_name'];
-}
 
 // Check if there are any available positions
 $hasAvailablePositions = !empty($positions);
@@ -397,7 +445,12 @@ if (isset($_SESSION['success_message'])): ?>
                 <h1 class="display-4 fw-bold">Candidate Application</h1>
                 <p class="lead mb-0">Apply to become a candidate in the upcoming student elections</p>
                 <hr class="my-4 opacity-25">
-                <div id="countdown-timer" class="mb-3"></div>
+                <div class="d-flex justify-content-center align-items-center gap-3 mb-3">
+                    <span class="badge bg-light text-dark">
+                        <i class="fas fa-building me-2"></i><?php echo htmlspecialchars($userBranch); ?> Branch
+                    </span>
+                    <div id="countdown-timer" class="mb-3"></div>
+                </div>
                 <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#guidelinesModal">
                     <i class="fas fa-info-circle me-2"></i>
                     View Application Guidelines

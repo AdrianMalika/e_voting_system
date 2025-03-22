@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id']) || $user['role'] !== 'admin') {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         // Validate input
-        $required_fields = ['title', 'description', 'voting_start', 'voting_end'];
+        $required_fields = ['title', 'description', 'branch', 'voting_start', 'voting_end'];
         
         $errors = [];
         foreach ($required_fields as $field) {
@@ -19,21 +19,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        // Validate branch
+        $valid_branches = ['Blantyre', 'Lilongwe', 'Mzuzu'];
+        if (!in_array($_POST['branch'], $valid_branches)) {
+            $errors[] = "Invalid branch selected";
+        }
+
         if (empty($errors)) {
             $conn->beginTransaction();
 
             // Insert election
             $stmt = $conn->prepare("
                 INSERT INTO elections (
-                    title, description, 
+                    title, description, branch,
                     start_date, end_date,
                     created_by, status
-                ) VALUES (?, ?, ?, ?, ?, 'upcoming')
+                ) VALUES (?, ?, ?, ?, ?, ?, 'upcoming')
             ");
 
             $stmt->execute([
                 $_POST['title'],
                 $_POST['description'],
+                $_POST['branch'],
                 $_POST['voting_start'],
                 $_POST['voting_end'],
                 $_SESSION['user_id']
@@ -63,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             add_notification(
                 $conn,
                 'new_election',
-                "New election created: {$_POST['title']}",
+                "New election created: {$_POST['title']} ({$_POST['branch']} Branch)",
                 $election_id,
                 'election',
                 $_SESSION['user_id']
@@ -114,6 +121,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="col-12">
                             <label for="description">Description</label>
                             <textarea class="form-control" name="description" rows="3" required></textarea>
+                        </div>
+                        <div class="col-md-12">
+                            <label for="branch">Branch</label>
+                            <select class="form-select" name="branch" required>
+                                <option value="">Select Branch</option>
+                                <option value="Blantyre">Blantyre</option>
+                                <option value="Lilongwe">Lilongwe</option>
+                                <option value="Zomba">Zomba</option>
+                            </select>
                         </div>
                     </div>
                 </div>

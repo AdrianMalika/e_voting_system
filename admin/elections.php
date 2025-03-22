@@ -17,6 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Validate and sanitize input
         $title = filter_input(INPUT_POST, 'title', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $description = filter_input(INPUT_POST, 'description', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $branch = filter_input(INPUT_POST, 'branch', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $start_date = filter_input(INPUT_POST, 'start_date', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $end_date = filter_input(INPUT_POST, 'end_date', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         
@@ -24,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $start_datetime = date('Y-m-d H:i:s', strtotime($start_date));
         $end_datetime = date('Y-m-d H:i:s', strtotime($end_date));
         
-        if (!$title || !$description || !$start_date || !$end_date) {
+        if (!$title || !$description || !$branch || !$start_date || !$end_date) {
             $_SESSION['error'] = "All fields are required";
         } elseif (strtotime($start_date) >= strtotime($end_date)) {
             $_SESSION['error'] = "End date must be after start date";
@@ -37,12 +38,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Set initial status
                 $status = strtotime($start_date) > time() ? 'upcoming' : 'active';
                 
-                // Insert election
+                // Insert election with branch
                 $stmt = $conn->prepare("
-                    INSERT INTO elections (title, description, start_date, end_date, status, created_by)
-                    VALUES (?, ?, ?, ?, ?, ?)
+                    INSERT INTO elections (title, description, branch, start_date, end_date, status, created_by)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
                 ");
-                $stmt->execute([$title, $description, $start_datetime, $end_datetime, $status, $user['id']]);
+                $stmt->execute([$title, $description, $branch, $start_datetime, $end_datetime, $status, $user['id']]);
                 
                 // Get the ID of the newly created election
                 $election_id = $conn->lastInsertId();
@@ -97,6 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $stmt = $conn->prepare("
     SELECT e.*, 
+           e.branch,
            (SELECT COUNT(*) FROM election_candidates ec WHERE ec.election_id = e.id) as total_candidates,
            (SELECT COUNT(*) FROM votes v WHERE v.election_id = e.id) as total_votes
     FROM elections e
@@ -143,6 +145,7 @@ $elections = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <tr>
                             <th>Title</th>
                             <th>Description</th>
+                            <th>Branch</th>
                             <th>Start Date</th>
                             <th>End Date</th>
                             <th>Status</th>
@@ -157,6 +160,7 @@ $elections = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <tr>
                                     <td><?php echo htmlspecialchars($election['title']); ?></td>
                                     <td><?php echo htmlspecialchars(substr($election['description'], 0, 50)) . '...'; ?></td>
+                                    <td><?php echo htmlspecialchars($election['branch']); ?></td>
                                     <td><?php echo date('M j, Y g:i a', strtotime($election['start_date'])); ?></td>
                                     <td><?php echo date('M j, Y g:i a', strtotime($election['end_date'])); ?></td>
                                     <td>
@@ -221,6 +225,15 @@ $elections = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="mb-3">
                         <label for="description" class="form-label">Description</label>
                         <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="branch" class="form-label">Branch</label>
+                        <select class="form-select" id="branch" name="branch" required>
+                            <option value="">Select Branch</option>
+                            <option value="Blantyre">Blantyre</option>
+                            <option value="Lilongwe">Lilongwe</option>
+                            <option value="Zomba">Zomba</option>
+                            </select>
                     </div>
                     <div class="mb-3">
                         <label for="start_date" class="form-label">Start Date</label>

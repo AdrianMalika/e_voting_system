@@ -1,12 +1,11 @@
-USE e_voting_system;
 -- phpMyAdmin SQL Dump
--- version 5.2.0
+-- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Feb 24, 2025 at 07:11 AM
--- Server version: 8.0.31
--- PHP Version: 8.0.26
+-- Generation Time: Mar 22, 2025 at 05:38 AM
+-- Server version: 8.2.0
+-- PHP Version: 8.2.13
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -25,6 +24,32 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `application_period`
+--
+
+DROP TABLE IF EXISTS `application_period`;
+CREATE TABLE IF NOT EXISTS `application_period` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `end` int NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_period` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `application_period`
+--
+
+INSERT INTO `application_period` (`id`, `end`) VALUES
+(1, 1741844220),
+(2, 1741844340),
+(3, 1741954680),
+(4, 1744460340),
+(5, 1742370900),
+(6, 1743321660);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `audit_logs`
 --
 
@@ -38,7 +63,7 @@ CREATE TABLE IF NOT EXISTS `audit_logs` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=375 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=565 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `audit_logs`
@@ -418,7 +443,198 @@ INSERT INTO `audit_logs` (`id`, `user_id`, `action`, `details`, `ip_address`, `c
 (371, 2, 'LOGIN', 'User logged in successfully', '127.0.0.1', '2025-02-12 09:35:28'),
 (372, 2, 'UPDATE_ELECTION', 'Updated election: intertainment prefect', '127.0.0.1', '2025-02-12 09:36:27'),
 (373, 2, 'LOGIN', 'User logged in successfully', '127.0.0.1', '2025-02-12 09:40:12'),
-(374, 2, 'LOGOUT', 'User logged out successfully', '127.0.0.1', '2025-02-12 10:18:47');
+(374, 2, 'LOGOUT', 'User logged out successfully', '127.0.0.1', '2025-02-12 10:18:47'),
+(375, 16, 'REGISTRATION', 'New student registration', '::1', '2025-02-24 09:31:51'),
+(376, 16, 'LOGIN', 'User logged in successfully', '::1', '2025-02-24 09:32:03'),
+(377, 16, 'LOGOUT', 'User logged out successfully', '::1', '2025-02-24 09:33:01'),
+(378, NULL, 'LOGIN_FAILED', 'Failed login attempt for email: Admin@evoting.com', '::1', '2025-02-25 16:51:46'),
+(379, NULL, 'LOGIN_FAILED', 'Failed login attempt for email: Admin@evoting.Com', '::1', '2025-02-25 16:52:16'),
+(380, NULL, 'LOGIN_FAILED', 'Failed login attempt for email: admin@evoting.com', '::1', '2025-02-25 16:53:05'),
+(381, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-02-25 16:53:31'),
+(382, 17, 'LOGIN', 'User logged in successfully', '::1', '2025-02-25 17:38:37'),
+(383, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-02-25 17:41:33'),
+(384, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-02-25 17:44:31'),
+(385, 2, 'LOGOUT', 'User logged out successfully', '::1', '2025-02-25 19:31:56'),
+(386, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-02-25 19:32:19'),
+(387, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-07 05:06:30'),
+(388, 2, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-07 06:30:26'),
+(389, NULL, 'LOGIN_FAILED', 'Failed login attempt for email: snow@mail.com', '::1', '2025-03-07 06:30:37'),
+(390, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-07 06:30:54'),
+(391, 2, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-07 06:31:18'),
+(392, NULL, 'LOGIN_FAILED', 'Failed login attempt for email: snow2@mail.com', '::1', '2025-03-07 06:31:26'),
+(393, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-07 06:31:49'),
+(394, 2, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-07 06:32:27'),
+(395, 20, 'LOGIN', 'User logged in successfully', '::1', '2025-03-07 06:32:36'),
+(396, 20, 'LOGIN', 'User logged in successfully', '::1', '2025-03-07 06:47:11'),
+(397, 20, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-07 06:50:29'),
+(398, 20, 'LOGIN', 'User logged in successfully', '::1', '2025-03-07 06:52:07'),
+(399, 20, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-07 06:56:17'),
+(400, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-07 06:56:37'),
+(401, 2, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-07 06:57:45'),
+(402, 20, 'LOGIN', 'User logged in successfully', '::1', '2025-03-07 06:57:54'),
+(403, 21, 'REGISTRATION', 'New candidate registration', '::1', '2025-03-07 07:08:32'),
+(404, 21, 'LOGIN_FAILED', 'Candidate account not yet approved', '::1', '2025-03-07 07:08:49'),
+(405, 20, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-07 07:09:01'),
+(406, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-07 07:09:18'),
+(407, 2, 'CANDIDATE_APPROVE', 'Candidate Adrian Malika was approved', '::1', '2025-03-07 07:09:30'),
+(408, 21, 'LOGIN', 'User logged in successfully', '::1', '2025-03-07 07:09:49'),
+(409, 21, 'REQUEST_JOIN_ELECTION', 'Requested to join election ID: 26', '::1', '2025-03-07 07:10:51'),
+(410, 2, 'CANDIDATE_APPROVE', 'Candidate Adrian Malika was approved', '::1', '2025-03-07 07:11:04'),
+(411, 2, 'CANDIDATE_REQUEST_APPROVE', 'Election ID: 26, Candidate ID: 7', '::1', '2025-03-07 07:11:27'),
+(412, NULL, 'LOGIN_FAILED', 'Failed login attempt for email: snow@mail.com', '127.0.0.1', '2025-03-07 07:12:37'),
+(413, 20, 'LOGIN', 'User logged in successfully', '127.0.0.1', '2025-03-07 07:12:51'),
+(414, 20, 'LOGIN', 'User logged in successfully', '::1', '2025-03-10 07:44:07'),
+(415, 20, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-10 07:53:59'),
+(416, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-10 07:55:07'),
+(417, 20, 'LOGIN', 'User logged in successfully', '127.0.0.1', '2025-03-10 07:58:13'),
+(418, 20, 'LOGIN', 'User logged in successfully', '127.0.0.1', '2025-03-10 07:58:22'),
+(419, 20, 'LOGIN', 'User logged in successfully', '127.0.0.1', '2025-03-10 08:00:18'),
+(420, 20, 'LOGIN', 'User logged in successfully', '::1', '2025-03-10 08:03:35'),
+(421, 20, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-10 08:06:26'),
+(422, 20, 'LOGIN', 'User logged in successfully', '::1', '2025-03-10 08:06:55'),
+(423, 20, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-10 08:09:03'),
+(424, 21, 'LOGIN', 'User logged in successfully', '::1', '2025-03-10 08:09:17'),
+(425, 21, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-10 15:33:21'),
+(426, 20, 'LOGIN', 'User logged in successfully', '::1', '2025-03-10 15:33:31'),
+(427, 2, 'REJECT_NOMINATION', 'Rejected nomination ID: 6', '::1', '2025-03-11 07:31:25'),
+(428, 2, 'REJECT_NOMINATION', 'Rejected nomination ID: 5', '::1', '2025-03-11 07:31:35'),
+(429, 20, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-11 13:53:45'),
+(430, NULL, 'LOGIN_FAILED', 'Failed login attempt for email: snow@mail.com', '::1', '2025-03-12 10:02:50'),
+(431, NULL, 'LOGIN_FAILED', 'Failed login attempt for email: snow@mail.com', '::1', '2025-03-12 10:03:18'),
+(432, NULL, 'LOGIN_FAILED', 'Failed login attempt for email: snow2@mail.com', '::1', '2025-03-12 10:03:36'),
+(433, NULL, 'LOGIN_FAILED', 'Failed login attempt for email: snow@mail.com', '::1', '2025-03-12 10:04:35'),
+(434, 20, 'LOGIN', 'User logged in successfully', '::1', '2025-03-12 10:04:45'),
+(435, NULL, 'LOGIN_FAILED', 'Failed login attempt for email: swon@gmail.com', '::1', '2025-03-12 10:08:16'),
+(436, 20, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-12 10:08:31'),
+(437, NULL, 'LOGIN_FAILED', 'Failed login attempt for email: snow@mail.com', '::1', '2025-03-12 10:08:54'),
+(438, NULL, 'LOGIN_FAILED', 'Failed login attempt for email: snow@mail.com', '::1', '2025-03-12 10:09:14'),
+(439, NULL, 'LOGIN_FAILED', 'Failed login attempt for email: snow2@mail.com', '::1', '2025-03-12 10:09:34'),
+(440, 20, 'LOGIN', 'User logged in successfully', '::1', '2025-03-12 10:10:00'),
+(441, 20, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-12 10:10:08'),
+(442, 20, 'LOGIN', 'User logged in successfully', '::1', '2025-03-12 10:10:27'),
+(443, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-12 10:14:37'),
+(444, 20, 'LOGIN', 'User logged in successfully', '::1', '2025-03-12 12:29:49'),
+(445, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-12 19:33:39'),
+(446, 20, 'LOGIN', 'User logged in successfully', '::1', '2025-03-13 05:37:01'),
+(447, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-15 08:52:51'),
+(448, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-15 11:44:13'),
+(449, 2, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-15 11:47:48'),
+(450, 23, 'LOGIN', 'User logged in successfully', '::1', '2025-03-15 11:47:57'),
+(451, 23, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-15 11:49:07'),
+(452, NULL, 'LOGIN_FAILED', 'Failed login attempt for email: adrianmalika01@gmail.com', '::1', '2025-03-15 11:49:21'),
+(453, 20, 'LOGIN', 'User logged in successfully', '::1', '2025-03-15 11:49:29'),
+(454, 20, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-15 11:49:35'),
+(455, NULL, 'LOGIN_FAILED', 'Failed login attempt for email: snow2@mail.com', '::1', '2025-03-15 11:49:53'),
+(456, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-15 11:50:53'),
+(457, 2, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-15 11:51:52'),
+(458, 21, 'LOGIN', 'User logged in successfully', '::1', '2025-03-15 11:52:07'),
+(459, 21, 'REQUEST_JOIN_ELECTION', 'Requested to join election ID: 26', '::1', '2025-03-15 12:13:01'),
+(460, 21, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-15 12:13:40'),
+(461, 23, 'LOGIN', 'User logged in successfully', '::1', '2025-03-15 12:14:33'),
+(462, 20, 'LOGIN', 'User logged in successfully', '::1', '2025-03-16 07:25:21'),
+(463, 20, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-16 07:25:40'),
+(464, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-16 07:25:52'),
+(465, 2, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-16 07:36:00'),
+(466, NULL, 'LOGIN_FAILED', 'Failed login attempt for email: Admin@evoting.com', '::1', '2025-03-16 08:05:24'),
+(467, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-16 08:05:35'),
+(468, 2, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-16 08:12:30'),
+(469, 20, 'LOGIN', 'User logged in successfully', '::1', '2025-03-16 08:12:45'),
+(470, 20, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-16 08:13:27'),
+(471, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-16 08:13:40'),
+(472, 2, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-16 08:25:18'),
+(473, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-16 08:29:05'),
+(474, 2, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-16 08:30:10'),
+(475, 20, 'LOGIN', 'User logged in successfully', '::1', '2025-03-16 08:30:22'),
+(476, 20, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-16 08:31:45'),
+(477, 21, 'LOGIN', 'User logged in successfully', '::1', '2025-03-16 08:31:58'),
+(478, 21, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-16 08:32:30'),
+(479, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-16 08:32:43'),
+(480, 20, 'LOGIN', 'User logged in successfully', '::1', '2025-03-17 10:37:35'),
+(481, 2, 'CREATE_ELECTION', 'Created election: h', '::1', '2025-03-17 10:43:42'),
+(482, 20, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-17 10:57:40'),
+(483, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-17 11:05:39'),
+(484, 2, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-17 11:06:40'),
+(485, 20, 'LOGIN', 'User logged in successfully', '::1', '2025-03-17 11:06:52'),
+(486, 2, 'CANDIDATE_REQUEST_REJECT', 'Election ID: 27, Candidate ID: 7', '::1', '2025-03-17 11:49:12'),
+(487, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-17 11:53:00'),
+(488, 20, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-17 11:53:38'),
+(489, 21, 'LOGIN', 'User logged in successfully', '::1', '2025-03-17 11:55:47'),
+(490, 21, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-17 12:01:44'),
+(491, 2, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-17 12:02:00'),
+(492, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-17 12:03:54'),
+(493, 2, 'CREATE_ELECTION', 'Created election: sports', '::1', '2025-03-17 12:20:15'),
+(494, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-17 15:18:44'),
+(495, 2, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-17 17:58:40'),
+(496, 21, 'LOGIN', 'User logged in successfully', '::1', '2025-03-17 17:58:55'),
+(497, 21, 'REQUEST_JOIN_ELECTION', 'Requested to join election ID: 28', '::1', '2025-03-17 17:59:02'),
+(498, 2, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-17 17:59:42'),
+(499, 20, 'LOGIN', 'User logged in successfully', '::1', '2025-03-17 17:59:55'),
+(500, 20, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-17 18:00:48'),
+(501, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-17 18:01:18'),
+(502, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-18 19:58:33'),
+(503, 2, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-18 20:12:48'),
+(504, 21, 'LOGIN', 'User logged in successfully', '::1', '2025-03-18 20:13:00'),
+(505, 21, 'REQUEST_JOIN_ELECTION', 'Requested to join election ID: 32', '::1', '2025-03-18 20:13:12'),
+(506, 21, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-18 20:13:21'),
+(507, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-18 20:13:30'),
+(508, 2, 'CANDIDATE_REQUEST_APPROVE', 'Election ID: 32, Candidate ID: 7', '::1', '2025-03-18 20:13:45'),
+(509, 2, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-18 20:14:55'),
+(510, NULL, 'LOGIN_FAILED', 'Failed login attempt for email: snow@mail.com', '::1', '2025-03-18 20:15:06'),
+(511, 20, 'LOGIN', 'User logged in successfully', '::1', '2025-03-18 20:15:19'),
+(512, 20, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-18 20:22:46'),
+(513, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-18 20:23:06'),
+(514, NULL, 'LOGIN_FAILED', 'Failed login attempt for email: Admin@evoting.com', '::1', '2025-03-19 07:32:00'),
+(515, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-19 07:32:13'),
+(516, 2, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-19 07:39:44'),
+(517, 20, 'LOGIN', 'User logged in successfully', '::1', '2025-03-19 07:43:42'),
+(518, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-19 07:44:27'),
+(519, 20, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-19 07:48:40'),
+(520, 24, 'LOGIN', 'User logged in successfully', '::1', '2025-03-19 07:49:16'),
+(521, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-20 20:02:59'),
+(522, 2, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-20 20:04:11'),
+(523, 20, 'LOGIN', 'User logged in successfully', '::1', '2025-03-20 20:04:27'),
+(524, 20, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-20 20:08:19'),
+(525, 21, 'LOGIN', 'User logged in successfully', '::1', '2025-03-20 20:08:30'),
+(526, 21, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-20 20:12:10'),
+(527, 20, 'LOGIN', 'User logged in successfully', '::1', '2025-03-20 20:12:18'),
+(528, 20, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-20 20:21:06'),
+(529, NULL, 'LOGIN_FAILED', 'Failed login attempt for email: Admin@evoting.comadmin123', '::1', '2025-03-20 20:21:34'),
+(530, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-20 20:21:53'),
+(531, NULL, 'LOGIN_FAILED', 'Failed login attempt for email: adrianmalika01@gmail.com', '::1', '2025-03-20 20:22:11'),
+(532, NULL, 'LOGIN_FAILED', 'Failed login attempt for email: adrianmalika01@gmail.com', '::1', '2025-03-20 20:22:19'),
+(533, NULL, 'LOGIN_FAILED', 'Failed login attempt for email: adrianmalika01@gmail.com', '::1', '2025-03-20 20:22:32'),
+(534, 2, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-20 20:22:48'),
+(535, NULL, 'LOGIN_FAILED', 'Failed login attempt for email: adrianmalika01@gmail.com', '::1', '2025-03-20 20:23:06'),
+(536, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-20 20:23:33'),
+(537, 2, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-20 20:25:00'),
+(538, NULL, 'LOGIN_FAILED', 'Failed login attempt for email: adrianmalika01@gmail.com', '::1', '2025-03-20 20:25:11'),
+(539, NULL, 'LOGIN_FAILED', 'Failed login attempt for email: adrianmalika01@gmail.com', '::1', '2025-03-20 20:25:31'),
+(540, NULL, 'LOGIN_FAILED', 'Failed login attempt for email: adrianmalika01@gmail.com', '::1', '2025-03-20 20:25:49'),
+(541, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-20 20:26:00'),
+(542, 2, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-20 20:27:16'),
+(543, 25, 'LOGIN', 'User logged in successfully', '::1', '2025-03-20 20:27:32'),
+(544, 25, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-20 20:31:39'),
+(545, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-20 20:31:49'),
+(546, 20, 'LOGIN', 'User logged in successfully', '127.0.0.1', '2025-03-21 06:33:51');
+INSERT INTO `audit_logs` (`id`, `user_id`, `action`, `details`, `ip_address`, `created_at`) VALUES
+(547, 2, 'APPROVE_NOMINATION', 'Approved nomination ID: 9', '::1', '2025-03-21 09:41:21'),
+(548, 2, 'APPROVE_NOMINATION', 'Approved nomination ID: 8', '::1', '2025-03-21 09:41:23'),
+(549, 2, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-21 11:29:23'),
+(550, NULL, 'LOGIN_FAILED', 'Failed login attempt for email: Admin@evoting.com', '::1', '2025-03-21 11:30:30'),
+(551, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-21 11:30:46'),
+(552, 2, 'LOGOUT', 'User logged out successfully', '::1', '2025-03-21 15:12:33'),
+(553, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-21 18:50:22'),
+(554, 26, 'LOGIN', 'User logged in successfully', '127.0.0.1', '2025-03-21 19:04:43'),
+(555, 2, 'APPROVE_NOMINATION', 'Approved nomination ID: 10', '::1', '2025-03-21 19:11:39'),
+(556, 2, 'LOGIN', 'User logged in successfully', '::1', '2025-03-22 03:34:57'),
+(557, 27, 'LOGIN', 'User logged in successfully', '127.0.0.1', '2025-03-22 03:38:32'),
+(558, 2, 'APPROVE_NOMINATION', 'Approved nomination ID: 11', '::1', '2025-03-22 03:52:01'),
+(559, 27, 'LOGOUT', 'User logged out successfully', '127.0.0.1', '2025-03-22 05:00:16'),
+(560, 28, 'LOGIN', 'User logged in successfully', '127.0.0.1', '2025-03-22 05:00:36'),
+(561, 28, 'LOGOUT', 'User logged out successfully', '127.0.0.1', '2025-03-22 05:11:51'),
+(562, 27, 'LOGIN', 'User logged in successfully', '127.0.0.1', '2025-03-22 05:11:56'),
+(563, 27, 'LOGOUT', 'User logged out successfully', '127.0.0.1', '2025-03-22 05:14:24'),
+(564, 28, 'LOGIN', 'User logged in successfully', '127.0.0.1', '2025-03-22 05:14:49');
 
 -- --------------------------------------------------------
 
@@ -437,7 +653,7 @@ CREATE TABLE IF NOT EXISTS `candidates` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `candidates`
@@ -449,7 +665,8 @@ INSERT INTO `candidates` (`id`, `user_id`, `position`, `manifesto`, `photo_url`,
 (3, 8, 'Manager', 'I will give you what you want', 'uploads/candidates/candidate_8_1736862264.jpg', 'approved', '2025-01-14 13:42:26'),
 (4, 11, 'learder', 'vote for me', 'uploads/candidates/candidate_11_1737363023.jpe', 'approved', '2025-01-20 08:49:17'),
 (5, 13, 'Unspecified', NULL, NULL, 'approved', '2025-02-12 07:54:26'),
-(6, 14, 'leader', 'Vote for me', 'uploads/candidates/candidate_14_1739347144.jpg', 'approved', '2025-02-12 07:55:08');
+(6, 14, 'leader', 'Vote for me', 'uploads/candidates/candidate_14_1739347144.jpg', 'approved', '2025-02-12 07:55:08'),
+(7, 21, 'Unspecified', 'just a chilled guy!!', 'uploads/candidates/candidate_21_1741331419.jpg', 'approved', '2025-03-07 07:08:32');
 
 -- --------------------------------------------------------
 
@@ -462,6 +679,7 @@ CREATE TABLE IF NOT EXISTS `elections` (
   `id` int NOT NULL AUTO_INCREMENT,
   `title` varchar(255) NOT NULL,
   `description` text,
+  `branch` varchar(50) NOT NULL,
   `start_date` datetime NOT NULL,
   `end_date` datetime NOT NULL,
   `status` enum('upcoming','active','completed') DEFAULT 'upcoming',
@@ -472,14 +690,15 @@ CREATE TABLE IF NOT EXISTS `elections` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_election` (`title`,`start_date`,`end_date`),
   KEY `created_by` (`created_by`)
-) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `elections`
 --
 
-INSERT INTO `elections` (`id`, `title`, `description`, `start_date`, `end_date`, `status`, `created_by`, `created_at`, `updated_at`, `manual_status`) VALUES
-(26, 'intertainment prefect', 'vote for intertainment', '2025-02-10 12:12:00', '2025-03-03 12:33:00', 'active', 2, '2025-02-12 08:18:51', '2025-02-12 09:36:27', 1);
+INSERT INTO `elections` (`id`, `title`, `description`, `branch`, `start_date`, `end_date`, `status`, `created_by`, `created_at`, `updated_at`, `manual_status`) VALUES
+(34, 'Student Council Elections 2025', 'ubueb', 'Blantyre', '2025-03-22 14:58:00', '2025-03-30 14:58:00', 'upcoming', 2, '2025-03-21 12:59:06', '2025-03-22 05:37:53', 0),
+(35, 'Student Council Elections 2025', 'bubhhu', 'Lilongwe', '2025-03-22 07:13:00', '2025-03-22 07:15:00', 'upcoming', 2, '2025-03-22 05:14:12', '2025-03-22 05:37:53', 0);
 
 -- --------------------------------------------------------
 
@@ -497,7 +716,7 @@ CREATE TABLE IF NOT EXISTS `election_candidates` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_election_candidate` (`election_id`,`candidate_id`),
   KEY `candidate_id` (`candidate_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=28 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=33 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `election_candidates`
@@ -517,18 +736,93 @@ CREATE TABLE IF NOT EXISTS `election_positions` (
   `id` int NOT NULL AUTO_INCREMENT,
   `election_id` int NOT NULL,
   `position_name` varchar(100) NOT NULL,
+  `position_description` text,
+  `required_year` int DEFAULT NULL,
+  `max_candidates` int DEFAULT '1',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_position_per_election` (`election_id`,`position_name`),
-  KEY `election_id` (`election_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  KEY `election_id` (`election_id`),
+  KEY `idx_election_position` (`election_id`,`position_name`)
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `election_positions`
 --
 
-INSERT INTO `election_positions` (`id`, `election_id`, `position_name`, `created_at`) VALUES
-(16, 26, 'prefect', '2025-02-12 08:18:51');
+INSERT INTO `election_positions` (`id`, `election_id`, `position_name`, `position_description`, `required_year`, `max_candidates`, `created_at`) VALUES
+(21, 34, 'Sports Prefect ', 'look over all sports events', 2, 7, '2025-03-21 12:59:06'),
+(22, 35, 'Sports Prefect ', 'look over all sports events', 0, 1, '2025-03-22 05:14:12');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `nominations`
+--
+
+DROP TABLE IF EXISTS `nominations`;
+CREATE TABLE IF NOT EXISTS `nominations` (
+  `nomination_id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `first_name` varchar(100) NOT NULL,
+  `surname` varchar(100) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `phone` varchar(15) NOT NULL,
+  `student_id` varchar(50) NOT NULL,
+  `program` varchar(255) NOT NULL,
+  `year_of_study` int NOT NULL,
+  `role` text NOT NULL,
+  `branch` text NOT NULL,
+  `photo_path` varchar(255) NOT NULL,
+  `manifesto` text NOT NULL,
+  `submission_date` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `status` enum('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+  `election_id` int NOT NULL,
+  PRIMARY KEY (`nomination_id`),
+  KEY `user_id` (`user_id`),
+  KEY `election_id` (`election_id`)
+) ENGINE=MyISAM AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `nominations`
+--
+
+INSERT INTO `nominations` (`nomination_id`, `user_id`, `first_name`, `surname`, `email`, `phone`, `student_id`, `program`, `year_of_study`, `role`, `branch`, `photo_path`, `manifesto`, `submission_date`, `status`, `election_id`) VALUES
+(11, 27, 'Adrian', 'Mailka', 'adrianmalika01@gmail.com', '0889545477', '88585', 'Phamactical', 2, 'Sports Prefect', 'Blantyre', '../uploads/profile_photos/67de33cb38903_1658787782673.jpg', 'I love Sports!!!', '2025-03-22 03:51:39', 'approved', 34),
+(10, 26, 'Jon', 'Snow', 'snow@mail.com', '0889545477', '1777', 'Phamactical', 2, 'Sports Prefect', 'Blantyre', '../uploads/profile_photos/67ddb9d0e5dce_JonSnow.jpg', 'I am the rocket!!', '2025-03-21 19:11:12', 'approved', 34);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `nomination_documents`
+--
+
+DROP TABLE IF EXISTS `nomination_documents`;
+CREATE TABLE IF NOT EXISTS `nomination_documents` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `nomination_id` int NOT NULL,
+  `document_type` enum('photo','transcript') NOT NULL,
+  `file_path` varchar(255) NOT NULL,
+  `file_name` varchar(255) NOT NULL,
+  `file_size` int NOT NULL,
+  `mime_type` varchar(100) NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `nomination_id` (`nomination_id`)
+) ENGINE=MyISAM AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `nomination_documents`
+--
+
+INSERT INTO `nomination_documents` (`id`, `nomination_id`, `document_type`, `file_path`, `file_name`, `file_size`, `mime_type`, `created_at`) VALUES
+(1, 7, 'photo', '../uploads/profile_photos/67cfda02895d8_1658787782673.jpg', '67cfda02895d8_1658787782673.jpg', 19397, 'image/jpeg', '2025-03-11 06:36:50'),
+(2, 7, 'transcript', '../uploads/academic_transcripts/67cfda0289fe1_Academic Transcript.docx', '67cfda0289fe1_Academic Transcript.docx', 18572, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', '2025-03-11 06:36:50'),
+(3, 8, 'photo', '../uploads/profile_photos/67cfe8135c3b8_JonSnow.jpg', '67cfe8135c3b8_JonSnow.jpg', 116643, 'image/jpeg', '2025-03-11 07:36:51'),
+(4, 8, 'transcript', '../uploads/academic_transcripts/67cfe8135c89f_Academic Transcript.docx', '67cfe8135c89f_Academic Transcript.docx', 18572, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', '2025-03-11 07:36:51'),
+(5, 9, 'photo', '../uploads/profile_photos/67dc7b0814b37_1658787782673.jpg', '67dc7b0814b37_1658787782673.jpg', 19397, 'image/jpeg', '2025-03-20 20:31:04'),
+(6, 10, 'photo', '../uploads/profile_photos/67ddb9d0e5dce_JonSnow.jpg', '67ddb9d0e5dce_JonSnow.jpg', 116643, 'image/jpeg', '2025-03-21 19:11:12'),
+(7, 11, 'photo', '../uploads/profile_photos/67de33cb38903_1658787782673.jpg', '67de33cb38903_1658787782673.jpg', 19397, 'image/jpeg', '2025-03-22 03:51:39');
 
 -- --------------------------------------------------------
 
@@ -549,7 +843,36 @@ CREATE TABLE IF NOT EXISTS `notifications` (
   PRIMARY KEY (`id`),
   KEY `type` (`type`),
   KEY `is_read` (`is_read`)
-) ENGINE=InnoDB AUTO_INCREMENT=117 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=155 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `notifications`
+--
+
+INSERT INTO `notifications` (`id`, `type`, `message`, `reference_id`, `reference_type`, `is_read`, `created_at`, `user_id`) VALUES
+(132, 'election_ended', 'Election \'h\' has ended', 27, 'election', 1, '2025-03-17 11:41:35', NULL),
+(133, 'election_ended', 'Election \'h\' has ended', 27, 'election', 1, '2025-03-17 11:48:22', NULL),
+(134, 'election_ended', 'Election \'h\' has ended', 27, 'election', 1, '2025-03-17 11:48:43', NULL),
+(135, 'new_election', 'New election created: sports (Starting: Mar 19, 2025)', 28, 'election', 1, '2025-03-17 12:20:15', 2),
+(136, 'new_election', 'A new election \'sports\' has been created and will start on Mar 19, 2025', 28, 'election', 1, '2025-03-17 12:20:15', 1),
+(137, 'new_election', 'A new election \'sports\' has been created and will start on Mar 19, 2025', 28, 'election', 1, '2025-03-17 12:20:15', 4),
+(138, 'new_election', 'A new election \'sports\' has been created and will start on Mar 19, 2025', 28, 'election', 1, '2025-03-17 12:20:15', 6),
+(139, 'new_election', 'A new election \'sports\' has been created and will start on Mar 19, 2025', 28, 'election', 1, '2025-03-17 12:20:15', 19),
+(140, 'new_election', 'A new election \'sports\' has been created and will start on Mar 19, 2025', 28, 'election', 1, '2025-03-17 12:20:15', 9),
+(141, 'new_election', 'A new election \'sports\' has been created and will start on Mar 19, 2025', 28, 'election', 1, '2025-03-17 12:20:15', 10),
+(142, 'new_election', 'A new election \'sports\' has been created and will start on Mar 19, 2025', 28, 'election', 1, '2025-03-17 12:20:15', 12),
+(143, 'new_election', 'A new election \'sports\' has been created and will start on Mar 19, 2025', 28, 'election', 1, '2025-03-17 12:20:15', 15),
+(144, 'new_election', 'A new election \'sports\' has been created and will start on Mar 19, 2025', 28, 'election', 1, '2025-03-17 12:20:15', 20),
+(145, 'new_election', 'A new election \'sports\' has been created and will start on Mar 19, 2025', 28, 'election', 1, '2025-03-17 12:20:15', 23),
+(146, 'new_election', 'New election created: Student Council Elections 2025', 32, 'election', 1, '2025-03-17 20:05:47', 2),
+(147, 'new_election', 'New election created: Student Council Elections 2025', 33, 'election', 1, '2025-03-19 07:58:26', 2),
+(148, 'election_ended', 'Election \'Student Council Elections 2025\' has ended', 32, 'election', 1, '2025-03-20 20:26:06', NULL),
+(149, 'election_ended', 'Election \'Student Council Elections 2025\' has ended', 32, 'election', 1, '2025-03-20 20:31:51', NULL),
+(150, 'election_ended', 'Election \'Student Council Elections 2025\' has ended', 32, 'election', 1, '2025-03-20 20:32:12', NULL),
+(151, 'election_ended', 'Election \'Student Council Elections 2025\' has ended', 32, 'election', 1, '2025-03-21 06:30:41', NULL),
+(152, 'new_election', 'New election created: Student Council Elections 2025', 34, 'election', 0, '2025-03-21 12:59:06', 2),
+(153, 'new_election', 'New election created: Student Council Elections 2025 (Lilongwe Branch)', 35, 'election', 0, '2025-03-22 05:14:12', 2),
+(154, 'election_ended', 'Election \'Student Council Elections 2025\' has ended', 35, 'election', 0, '2025-03-22 05:37:47', NULL);
 
 -- --------------------------------------------------------
 
@@ -563,6 +886,8 @@ CREATE TABLE IF NOT EXISTS `users` (
   `name` varchar(100) NOT NULL,
   `email` varchar(100) NOT NULL,
   `student_number` varchar(20) DEFAULT NULL,
+  `branch` varchar(50) DEFAULT NULL,
+  `year_of_study` varchar(20) DEFAULT NULL,
   `password_hash` varchar(255) NOT NULL,
   `role` enum('student','admin','candidate') NOT NULL DEFAULT 'student',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
@@ -570,28 +895,31 @@ CREATE TABLE IF NOT EXISTS `users` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`),
   UNIQUE KEY `student_number` (`student_number`)
-) ENGINE=MyISAM AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `name`, `email`, `student_number`, `password_hash`, `role`, `created_at`, `updated_at`) VALUES
-(1, 'Noordin', 'haroonchirimba2@gmail.com', '2131231', '$2y$10$uBUHaXOJlV..Z3MFwCTouetgYJsmaU1napVb/zF6z1ZZs3./bmDri', 'student', '2025-01-07 12:17:00', '2025-01-07 12:17:00'),
-(2, 'System Admin', 'admin@evoting.com', NULL, '$2y$10$.h8kWeeWhH.eWIYgfPDVuugDgEs3GDSdIdX09I70ETPYaBQ5VtciS', 'admin', '2025-01-07 12:53:46', '2025-01-07 12:53:46'),
-(3, 'Noordin', 'Noordin@gmail.com', '123123132', '$2y$10$Uv8COfuKJrSKWc9HyJD3Zu5BdZr9yg46N/zgrT4gABYWUnHzGoIiK', 'candidate', '2025-01-07 13:14:13', '2025-01-07 13:14:13'),
-(4, 'Nonax', 'nonax@gmail.com', '12346567', '$2y$10$yMJvos/C3ASdg7.PjdEOe.Be89bFjD3DeIMVxwKl5qF9ffh90E3Z2', 'student', '2025-01-13 17:30:35', '2025-01-13 17:30:35'),
-(5, 'bright', 'bright@gmail.com', '21314324', '$2y$10$U42o.5h3wh7jAEKsy/sMneDCbpjynhwiHvdQ.jFYG62cTEKxPK.RK', 'candidate', '2025-01-13 17:32:18', '2025-01-13 17:32:18'),
-(6, 'marry', 'marry@gmail.com', '123123', '$2y$10$mpvFpvgNqgkqYxFQu4k39OUeGsTgyPTQZhvNvb7Bi5AYM9tuO7yja', 'student', '2025-01-13 18:31:37', '2025-01-13 18:31:37'),
-(7, 'gwen', 'gwen@gmail.com', '1232313123', '$2y$10$4KCYkE9FX.DA26gyZgHDwueZ8OpUBQg2k6SGzX9JnsrpY5R6tc.cm', 'student', '2025-01-14 13:41:08', '2025-01-14 13:41:08'),
-(8, 'bester', 'bester@gmail.com', '32423423', '$2y$10$NPZEyczOhfcgx4aNikKS5utnA7JR6VuXS0fXFBxjna2.3Vn5RARI.', 'candidate', '2025-01-14 13:42:26', '2025-01-14 13:42:26'),
-(9, 'gon frics', 'gon@gmail.com', '12345', '$2y$10$n5lSdP91W7RfUR4KHsDn8.re53LGz8ZWRjY/HJKv3lOA1hyi7vZHK', 'student', '2025-01-14 13:47:18', '2025-01-14 13:47:18'),
-(10, 'imran', 'imran@gmail.com', '567894', '$2y$10$Ud3c/vgTYmHDSGA6HFRzWetgdkMyrSi6uHChgI/0ulONB6Ouf4Xki', 'student', '2025-01-20 08:48:14', '2025-01-20 08:48:14'),
-(11, 'trevor', 'trevor@gmail.com', '6748484', '$2y$10$g5E3QtwOBJjMPLRTX0Gx/OypWBWf6zyW3MB...85bLbPJs2tnmtMS', 'candidate', '2025-01-20 08:49:17', '2025-01-20 08:49:17'),
-(12, 'paul', 'paul@gmail.com', '12345676', '$2y$10$EO5er8eus87Pf9PEuN5vwOfjCxwZ/3zPiiuoQ2Lvs3adp6yq5m.k6', 'student', '2025-02-12 07:52:33', '2025-02-12 07:52:33'),
-(13, 'paul', 'paul1@gmail.com', '12345678', '$2y$10$3JwCcbS7KlVC/TrBsuI3rebddgabf4tbawjEFewa/zFv6b.2..ZoC', 'candidate', '2025-02-12 07:54:26', '2025-02-12 07:54:26'),
-(14, 'oscar', 'oscar@gmail.com', '12345677', '$2y$10$6LpKVuxXaBxiqBRK4lFdbucdCtgJiuztkKiQuHXgXNX7UBwMo0fP6', 'candidate', '2025-02-12 07:55:08', '2025-02-12 07:55:08'),
-(15, 'khash', 'khash@gmail.com', '1234556', '$2y$10$u/hSUaYfsfceP1x/vgB3z.lX3v/EyjNit8mrAZcJZeNz5rwIkdwOa', 'student', '2025-02-12 08:12:47', '2025-02-12 08:12:47');
+INSERT INTO `users` (`id`, `name`, `email`, `student_number`, `branch`, `year_of_study`, `password_hash`, `role`, `created_at`, `updated_at`) VALUES
+(1, 'Noordin', 'haroonchirimba2@gmail.com', '213123', NULL, NULL, '$2y$10$uBUHaXOJlV..Z3MFwCTouetgYJsmaU1napVb/zF6z1ZZs3./bmDri', 'student', '2025-01-07 12:17:00', '2025-03-07 06:27:29'),
+(2, 'System Admin', 'admin@evoting.com', NULL, 'Blantyre', NULL, '$2y$10$.h8kWeeWhH.eWIYgfPDVuugDgEs3GDSdIdX09I70ETPYaBQ5VtciS', 'admin', '2025-01-07 12:53:46', '2025-03-22 04:29:07'),
+(3, 'Noordin', 'Noordin@gmail.com', '123123132', NULL, NULL, '$2y$10$Uv8COfuKJrSKWc9HyJD3Zu5BdZr9yg46N/zgrT4gABYWUnHzGoIiK', 'candidate', '2025-01-07 13:14:13', '2025-01-07 13:14:13'),
+(5, 'bright', 'bright@gmail.com', '21314324', NULL, NULL, '$2y$10$U42o.5h3wh7jAEKsy/sMneDCbpjynhwiHvdQ.jFYG62cTEKxPK.RK', 'candidate', '2025-01-13 17:32:18', '2025-01-13 17:32:18'),
+(6, 'marry', 'marry@gmail.com', '123123', NULL, NULL, '$2y$10$mpvFpvgNqgkqYxFQu4k39OUeGsTgyPTQZhvNvb7Bi5AYM9tuO7yja', 'student', '2025-01-13 18:31:37', '2025-01-13 18:31:37'),
+(27, 'Adrian Mailka', 'adrianmalika01@gmail.com', '55554', 'Blantyre', 'Third Year', '$2y$10$c9P/UOL9pB5I92ZdA8HU..1khCLqqVTvI2PjL11HTSThaH9GzoYI2', 'student', '2025-03-22 03:36:11', '2025-03-22 03:36:11'),
+(8, 'bester', 'bester@gmail.com', '32423423', NULL, NULL, '$2y$10$NPZEyczOhfcgx4aNikKS5utnA7JR6VuXS0fXFBxjna2.3Vn5RARI.', 'candidate', '2025-01-14 13:42:26', '2025-01-14 13:42:26'),
+(9, 'gon frics', 'gon@gmail.com', '12345', NULL, NULL, '$2y$10$n5lSdP91W7RfUR4KHsDn8.re53LGz8ZWRjY/HJKv3lOA1hyi7vZHK', 'student', '2025-01-14 13:47:18', '2025-01-14 13:47:18'),
+(10, 'imran', 'imran@gmail.com', '567894', NULL, NULL, '$2y$10$Ud3c/vgTYmHDSGA6HFRzWetgdkMyrSi6uHChgI/0ulONB6Ouf4Xki', 'student', '2025-01-20 08:48:14', '2025-01-20 08:48:14'),
+(11, 'trevor', 'trevor@gmail.com', '6748484', NULL, NULL, '$2y$10$g5E3QtwOBJjMPLRTX0Gx/OypWBWf6zyW3MB...85bLbPJs2tnmtMS', 'candidate', '2025-01-20 08:49:17', '2025-01-20 08:49:17'),
+(12, 'paul', 'paul@gmail.com', '12345676', NULL, NULL, '$2y$10$EO5er8eus87Pf9PEuN5vwOfjCxwZ/3zPiiuoQ2Lvs3adp6yq5m.k6', 'student', '2025-02-12 07:52:33', '2025-02-12 07:52:33'),
+(13, 'paul', 'paul1@gmail.com', '12345678', NULL, NULL, '$2y$10$3JwCcbS7KlVC/TrBsuI3rebddgabf4tbawjEFewa/zFv6b.2..ZoC', 'candidate', '2025-02-12 07:54:26', '2025-02-12 07:54:26'),
+(14, 'oscar', 'oscar@gmail.com', '12345677', NULL, NULL, '$2y$10$6LpKVuxXaBxiqBRK4lFdbucdCtgJiuztkKiQuHXgXNX7UBwMo0fP6', 'candidate', '2025-02-12 07:55:08', '2025-02-12 07:55:08'),
+(15, 'khash', 'khash@gmail.com', '1234556', NULL, NULL, '$2y$10$u/hSUaYfsfceP1x/vgB3z.lX3v/EyjNit8mrAZcJZeNz5rwIkdwOa', 'student', '2025-02-12 08:12:47', '2025-02-12 08:12:47'),
+(21, 'Adrian Malika', 'adrianmalika@gmail.com', '5111', NULL, NULL, '$2y$10$Py8ZaXkFh2Er5VkEodSRKOz0uwUycKXtAoH8KPfRbIlLg6HPGDYLO', 'candidate', '2025-03-07 07:08:32', '2025-03-07 07:08:32'),
+(24, 'Imran', 'imrantawakali55@gmail.com', '55522', NULL, NULL, '$2y$10$NskTwOAgZ6WYVF0nXnDTmuzXib90oLvGx6gkrXQAN52zqNSMLpo.K', 'student', '2025-03-19 07:46:10', '2025-03-19 07:46:10'),
+(26, 'Jon snow', 'snow@mail.com', '1777', 'Blantyre', 'Fourth Year', '$2y$10$bc9sZxBcDHWGzuD0zOpweOsxrih91OZDXhLolmfhMLoju.9b3HOKe', 'student', '2025-03-21 19:04:02', '2025-03-21 19:04:02'),
+(28, 'Jack Patrickson', 'jack@mail.com', '78882', 'Lilongwe', 'Second Year', '$2y$10$UQNbWefV6zAoW2gxZNDacuFntqBZ7OJY8cvSnSL7PFYezwO4fMk/y', 'student', '2025-03-22 05:00:01', '2025-03-22 05:00:01');
 
 -- --------------------------------------------------------
 
@@ -610,7 +938,7 @@ CREATE TABLE IF NOT EXISTS `votes` (
   UNIQUE KEY `unique_vote` (`election_id`,`voter_id`),
   KEY `voter_id` (`voter_id`),
   KEY `candidate_id` (`candidate_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Constraints for dumped tables

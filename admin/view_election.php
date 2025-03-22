@@ -47,9 +47,10 @@ $stmt = $conn->prepare("
     FROM nominations n
     WHERE n.election_id = ?
     AND n.status = 'approved'
+    AND n.branch = (SELECT branch FROM elections WHERE id = ?)
     ORDER BY n.role, n.first_name
 ");
-$stmt->execute([$election_id]);
+$stmt->execute([$election_id, $election_id]);
 $nominees = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
@@ -65,18 +66,22 @@ $nominees = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <h2 class="display-6 mb-2"><?php echo htmlspecialchars($election['title']); ?></h2>
                         <div class="d-flex gap-4">
                             <div class="d-flex align-items-center">
+                                <i class="fas fa-building me-2"></i>
+                                <span><?php echo htmlspecialchars($election['branch']); ?> Branch</span>
+    </div>
+                            <div class="d-flex align-items-center">
                                 <i class="fas fa-users me-2"></i>
                                 <span><?php echo count($nominees); ?> Candidates</span>
-                            </div>
+        </div>
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-calendar me-2"></i>
                                 <span><?php echo date('M j, Y', strtotime($election['start_date'])); ?> - <?php echo date('M j, Y', strtotime($election['end_date'])); ?></span>
-                            </div>
+        </div>
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-clock me-2"></i>
                                 <span><?php echo ucfirst($election['status']); ?></span>
-                            </div>
-                        </div>
+                    </div>
+                </div>
                     </div>
                     <a href="manage_elections.php" class="btn btn-light btn-lg rounded-pill">
                         <i class="fas fa-arrow-left me-2"></i>Back to Elections
@@ -132,20 +137,20 @@ $nominees = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <div class="position-relative">
                                         <?php if ($nominee['photo_path']): ?>
                                             <img src="<?php echo htmlspecialchars($nominee['photo_path']); ?>" 
-                                                 class="card-img-top candidate-photo" 
+                                 class="card-img-top candidate-photo" 
                                                  alt="<?php echo htmlspecialchars($nominee['first_name'] . ' ' . $nominee['surname']); ?>">
-                                        <?php else: ?>
-                                            <div class="card-img-top candidate-photo-placeholder">
-                                                <i class="fas fa-user-circle"></i>
-                                            </div>
-                                        <?php endif; ?>
+                        <?php else: ?>
+                            <div class="card-img-top candidate-photo-placeholder">
+                                <i class="fas fa-user-circle"></i>
+                            </div>
+                        <?php endif; ?>
                                         <div class="position-absolute top-0 end-0 m-3">
                                             <span class="badge bg-primary rounded-pill">
                                                 <?php echo htmlspecialchars($nominee['branch']); ?>
                                             </span>
                                         </div>
                                     </div>
-                                    <div class="card-body">
+                        <div class="card-body">
                                         <h5 class="card-title mb-3">
                                             <?php echo htmlspecialchars($nominee['first_name'] . ' ' . $nominee['surname']); ?>
                                         </h5>

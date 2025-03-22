@@ -149,9 +149,7 @@ if (isset($_GET['view_requests']) && is_numeric($_GET['view_requests'])) {
                             <p class="lead mb-0">Monitor and manage all election activities</p>
                         </div>
                         <div class="d-flex gap-2">
-                            <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#statsModal">
-                                <i class="fas fa-chart-pie me-2"></i>Statistics
-                            </button>
+
                             <a href="add_election.php" class="btn btn-success">
                                 <i class="fas fa-plus me-2"></i>Create Election
                             </a>
