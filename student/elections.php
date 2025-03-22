@@ -8,6 +8,10 @@ if (!isset($_SESSION['user_id']) || $user['role'] !== 'student') {
     exit();
 }
 
+// Get user's branch
+$stmt = $conn->prepare("SELECT branch FROM users WHERE id = ?");
+$stmt->execute([$_SESSION['user_id']]);
+$userBranch = $stmt->fetch(PDO::FETCH_ASSOC)['branch'];
 
 ?>
 
@@ -17,6 +21,11 @@ if (!isset($_SESSION['user_id']) || $user['role'] !== 'student') {
         <div class="col-12 text-center py-4 bg-custom-primary text-white rounded-3 shadow">
             <h1 class="display-4 fw-bold">Student Elections</h1>
             <p class="lead">Choose your representatives and make your voice heard</p>
+            <div class="mt-3">
+                <span class="badge bg-light text-dark">
+                    <i class="fas fa-building me-2"></i>Your Branch: <?php echo htmlspecialchars($userBranch); ?>
+                </span>
+            </div>
         </div>
     </div>
 
@@ -24,16 +33,22 @@ if (!isset($_SESSION['user_id']) || $user['role'] !== 'student') {
     <div class="row g-4 justify-content-center">
         <!-- Blantyre Card -->
         <div class="col-12 col-md-4">
-            <div class="card h-100 shadow-lg border-0 region-card">
+            <div class="card h-100 shadow-lg border-0 region-card <?php echo $userBranch !== 'Blantyre' ? 'disabled-card' : ''; ?>">
                 <div class="card-body text-center p-5">
                     <div class="mb-4">
                         <div class="region-icon mb-3">
-                            <i class="fas fa-landmark fa-3x text-custom-primary"></i>
+                            <i class="fas fa-landmark fa-3x <?php echo $userBranch === 'Blantyre' ? 'text-custom-primary' : 'text-secondary'; ?>"></i>
                         </div>
                         <h2 class="card-title fw-bold mb-4">Blantyre</h2>
-                        <button class="btn btn-custom-primary btn-lg w-75 hover-scale" data-bs-toggle="modal" data-bs-target="#voteModal">
-                            <i class="fas fa-vote-yea me-2"></i>Vote Now
-                        </button>
+                        <?php if ($userBranch === 'Blantyre'): ?>
+                            <a href="view_elections.php?branch=Blantyre" class="btn btn-custom-primary btn-lg w-75 hover-scale">
+                                <i class="fas fa-vote-yea me-2"></i>View Elections
+                            </a>
+                        <?php else: ?>
+                            <button class="btn btn-secondary btn-lg w-75" disabled>
+                                <i class="fas fa-lock me-2"></i>Not Available
+                            </button>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -41,16 +56,22 @@ if (!isset($_SESSION['user_id']) || $user['role'] !== 'student') {
 
         <!-- Lilongwe Card -->
         <div class="col-12 col-md-4">
-            <div class="card h-100 shadow-lg border-0 region-card">
+            <div class="card h-100 shadow-lg border-0 region-card <?php echo $userBranch !== 'Lilongwe' ? 'disabled-card' : ''; ?>">
                 <div class="card-body text-center p-5">
                     <div class="mb-4">
                         <div class="region-icon mb-3">
-                            <i class="fas fa-landmark fa-3x text-custom-primary"></i>
+                            <i class="fas fa-landmark fa-3x <?php echo $userBranch === 'Lilongwe' ? 'text-custom-primary' : 'text-secondary'; ?>"></i>
                         </div>
                         <h2 class="card-title fw-bold mb-4">Lilongwe</h2>
-                        <button class="btn btn-custom-primary btn-lg w-75 hover-scale" data-bs-toggle="modal" data-bs-target="#voteModal">
-                            <i class="fas fa-vote-yea me-2"></i>Vote Now
-                        </button>
+                        <?php if ($userBranch === 'Lilongwe'): ?>
+                            <a href="view_elections.php?branch=Lilongwe" class="btn btn-custom-primary btn-lg w-75 hover-scale">
+                                <i class="fas fa-vote-yea me-2"></i>View Elections
+                            </a>
+                        <?php else: ?>
+                            <button class="btn btn-secondary btn-lg w-75" disabled>
+                                <i class="fas fa-lock me-2"></i>Not Available
+                            </button>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -58,16 +79,22 @@ if (!isset($_SESSION['user_id']) || $user['role'] !== 'student') {
 
         <!-- Zomba Card -->
         <div class="col-12 col-md-4">
-            <div class="card h-100 shadow-lg border-0 region-card">
+            <div class="card h-100 shadow-lg border-0 region-card <?php echo $userBranch !== 'Zomba' ? 'disabled-card' : ''; ?>">
                 <div class="card-body text-center p-5">
                     <div class="mb-4">
                         <div class="region-icon mb-3">
-                            <i class="fas fa-landmark fa-3x text-custom-primary"></i>
+                            <i class="fas fa-landmark fa-3x <?php echo $userBranch === 'Zomba' ? 'text-custom-primary' : 'text-secondary'; ?>"></i>
                         </div>
                         <h2 class="card-title fw-bold mb-4">Zomba</h2>
-                        <button class="btn btn-custom-primary btn-lg w-75 hover-scale" data-bs-toggle="modal" data-bs-target="#voteModal">
-                            <i class="fas fa-vote-yea me-2"></i>Vote Now
-                        </button>
+                        <?php if ($userBranch === 'Zomba'): ?>
+                            <a href="view_elections.php?branch=Zomba" class="btn btn-custom-primary btn-lg w-75 hover-scale">
+                                <i class="fas fa-vote-yea me-2"></i>View Elections
+                            </a>
+                        <?php else: ?>
+                            <button class="btn btn-secondary btn-lg w-75" disabled>
+                                <i class="fas fa-lock me-2"></i>Not Available
+                            </button>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -149,6 +176,20 @@ if (!isset($_SESSION['user_id']) || $user['role'] !== 'student') {
 .btn {
     border-radius: 30px;
     padding: 12px 25px;
+}
+
+.disabled-card {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.disabled-card:hover {
+    transform: none;
+}
+
+.badge {
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
 }
 </style>
 
