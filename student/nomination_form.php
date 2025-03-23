@@ -562,12 +562,10 @@ if (isset($_SESSION['success_message'])): ?>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="branch" class="form-label">Branch</label>
-                                    <select class="form-select" id="branch" name="branch" required>
-                                        <option value="">Select Branch</option>
-                                        <option value="Blantyre">Blantyre</option>
-                                        <option value="Lilongwe">Lilongwe</option>
-                                        <option value="Zomba">Zomba</option>
+                                    <select class="form-select" id="branch" name="branch" required disabled>
+                                        <option value="<?php echo htmlspecialchars($userBranch); ?>"><?php echo htmlspecialchars($userBranch); ?></option>
                                     </select>
+                                    <div class="form-text">You cannot change your branch.</div>
                                 </div>
                             </div>
                         </div>
