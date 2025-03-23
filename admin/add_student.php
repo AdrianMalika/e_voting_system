@@ -450,6 +450,7 @@ function generateSimplePassword() {
                                             <option value="">Select Branch</option>
                                             <option value="Blantyre">Blantyre</option>
                                             <option value="Lilongwe">Lilongwe</option>
+                                            <option value="Zomba">Zomba</option>
                                         </select>
                                         <label for="branch" 
                                                class="floating-label">
