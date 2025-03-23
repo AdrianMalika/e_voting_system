@@ -37,7 +37,7 @@ $elections = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
-                <h2><i class="fas fa-vote-yea me-2"></i>Elections in <?php echo htmlspecialchars($userBranch); ?></h2>
+                <h2 style="color: #2c3e50;"><i class="fas fa-vote-yea me-2"></i>Elections in <?php echo htmlspecialchars($userBranch); ?></h2>
                 <a href="elections.php" class="btn btn-outline-primary">
                     <i class="fas fa-arrow-left me-2"></i>Back
                 </a>
@@ -64,7 +64,7 @@ $elections = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             </p>
                             <p><?php echo htmlspecialchars($election['description']); ?></p>
                             <a href="vote.php?election_id=<?php echo $election['id']; ?>" 
-                               class="btn btn-primary">
+                               class="btn" style="background-color: #2c3e50; color: white;">
                                 <i class="fas fa-check-circle me-2"></i>Vote Now
                             </a>
                         </div>
@@ -74,5 +74,8 @@ $elections = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
     <?php endif; ?>
 </div>
+
+<!-- Include Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
 <?php require_once '../includes/footer.php'; ?> 
