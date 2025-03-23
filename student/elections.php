@@ -8,6 +8,8 @@ if (!isset($_SESSION['user_id']) || $user['role'] !== 'student') {
     exit();
 }
 
+error_log("User ID: " . $_SESSION['user_id']);
+
 // Get user's branch
 $stmt = $conn->prepare("SELECT branch FROM users WHERE id = ?");
 $stmt->execute([$_SESSION['user_id']]);

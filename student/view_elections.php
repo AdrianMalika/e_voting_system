@@ -31,6 +31,11 @@ $stmt = $conn->prepare("
 ");
 $stmt->execute([$userBranch]);
 $elections = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Debugging: Log the number of elections found
+error_log("Number of elections found: " . count($elections));
+
+error_log("User Branch: " . $userBranch);
 ?>
 
 <div class="container py-5">
@@ -77,5 +82,6 @@ $elections = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 <!-- Include Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <?php require_once '../includes/footer.php'; ?> 

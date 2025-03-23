@@ -241,5 +241,6 @@ document.getElementById('voteForm').addEventListener('submit', function(e) {
     }
 });
 </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <?php require_once '../includes/footer.php'; ?>
