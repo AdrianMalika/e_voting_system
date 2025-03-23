@@ -137,6 +137,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     ]);
                     $_SESSION['success'] = "Nomination rejected successfully";
                     break;
+
+                case 'delete':
+                    $stmt = $conn->prepare("
+                        DELETE FROM nominations 
+                        WHERE nomination_id = ?
+                    ");
+                    $stmt->execute([$nomination_id]);
+
+                    // Log the deletion
+                    $stmt = $conn->prepare("
+                        INSERT INTO audit_logs (user_id, action, details, ip_address)
+                        VALUES (?, 'DELETE_NOMINATION', ?, ?)
+                    ");
+                    $stmt->execute([
+                        $_SESSION['user_id'],
+                        "Deleted nomination ID: $nomination_id",
+                        $_SERVER['REMOTE_ADDR']
+                    ]);
+                    $_SESSION['success'] = "Nomination deleted successfully";
+                    break;
             }
         }
     } catch (Exception $e) {
@@ -353,24 +373,34 @@ $applicationEnd = $applicationPeriod['end'];
                                 </span>
                             </td>
                             <td>
-                                <?php if (!isset($nomination['status']) || $nomination['status'] === 'pending'): ?>
-                                    <div class="btn-group">
-                                        <form method="POST" class="me-1">
-                                            <input type="hidden" name="action" value="approve">
-                                            <input type="hidden" name="nomination_id" value="<?php echo htmlspecialchars($nomination['nomination_id']); ?>">
-                                            <button type="submit" class="btn btn-sm btn-success">
-                                                <i class="fas fa-check me-1"></i>Approve
-                                            </button>
-                                        </form>
-                                        <form method="POST">
-                                            <input type="hidden" name="action" value="reject">
-                                            <input type="hidden" name="nomination_id" value="<?php echo htmlspecialchars($nomination['nomination_id']); ?>">
-                                            <button type="submit" class="btn btn-sm btn-danger">
-                                                <i class="fas fa-times me-1"></i>Reject
-                                            </button>
-                                        </form>
-                                    </div>
-                                <?php endif; ?>
+                                <div class="btn-group">
+                                    <!-- Approve Button -->
+                                    <form method="POST" class="me-1">
+                                        <input type="hidden" name="action" value="approve">
+                                        <input type="hidden" name="nomination_id" value="<?php echo htmlspecialchars($nomination['nomination_id']); ?>">
+                                        <button type="submit" class="btn btn-sm btn-success">
+                                            <i class="fas fa-check me-1"></i>Approve
+                                        </button>
+                                    </form>
+                                    
+                                    <!-- Reject Button -->
+                                    <form method="POST" class="me-1">
+                                        <input type="hidden" name="action" value="reject">
+                                        <input type="hidden" name="nomination_id" value="<?php echo htmlspecialchars($nomination['nomination_id']); ?>">
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-times me-1"></i>Reject
+                                        </button>
+                                    </form>
+                                    
+                                    <!-- Delete Button -->
+                                    <form method="POST" onsubmit="return confirm('Are you sure you want to delete this nomination?');">
+                                        <input type="hidden" name="action" value="delete">
+                                        <input type="hidden" name="nomination_id" value="<?php echo htmlspecialchars($nomination['nomination_id']); ?>">
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash me-1"></i>Delete
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -387,6 +417,11 @@ $applicationEnd = $applicationPeriod['end'];
 }
 .badge {
     padding: 0.5em 0.75em;
+}
+.btn-group {
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
 }
 .btn-group .btn {
     border-radius: 4px;
@@ -434,4 +469,3 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <?php require_once '../includes/footer.php'; ?>
-
