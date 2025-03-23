@@ -3,6 +3,14 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
+// Include PHPMailer classes at the top
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
+use PHPMailer\PHPMailer\Exception;
+
+// Require composer autoloader
+require_once __DIR__ . '/../vendor/autoload.php';
+
 // Set the default timezone to your local timezone
 date_default_timezone_set('Africa/Blantyre');
 
@@ -30,6 +38,73 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     ");
                     $stmt->execute([$nomination_id]);
 
+                    // Get candidate's email
+                    $stmt = $conn->prepare("
+                        SELECT n.first_name, n.surname, n.email, n.role
+                        FROM nominations n
+                        WHERE n.nomination_id = ?
+                    ");
+                    $stmt->execute([$nomination_id]);
+                    $candidate = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                    // Send email using PHPMailer
+                    $mail = new PHPMailer(true);
+                    try {
+                        // Server settings
+                        $mail->isSMTP();
+                        $mail->Host = 'smtp.gmail.com';
+                        $mail->SMTPAuth = true;
+                        $mail->Username = 'imranttawakali@gmail.com';
+                        $mail->Password = 'lmrb lonc nqyh apfn';
+                        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                        $mail->Port = 587;
+
+                        // Recipients
+                        $mail->setFrom('imranttawakali@gmail.com', 'Malawi College of Health Sciences Election Committee');
+                        $mail->addAddress($candidate['email']);
+
+                        // Content
+                        $mail->isHTML(true);
+                        $mail->Subject = "MCHS Election - Nomination Approval Notification";
+                        
+                        // HTML body
+                        $mail->Body = "
+                            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                                <div style='text-align: center; margin-bottom: 20px;'>
+                                    <h2 style='color: #2c3e50;'>Malawi College of Health Sciences</h2>
+                                    <h3 style='color: #34495e;'>Student Election Committee</h3>
+                                </div>
+                                <div style='padding: 20px; border: 1px solid #ddd; border-radius: 5px;'>
+                                    <h3 style='color: #2c3e50;'>Nomination Approval Notice</h3>
+                                    <p>Dear " . htmlspecialchars($candidate['first_name']) . " " . htmlspecialchars($candidate['surname']) . ",</p>
+                                    <p>Congratulations! Your nomination for the position of <strong>" . htmlspecialchars($candidate['role']) . "</strong> 
+                                    has been approved by the MCHS Election Committee.</p>
+                                    <p>You are now officially a candidate for the upcoming MCHS Student Election.</p>
+                                    <br>
+                                    <p>Best regards,<br>
+                                    <strong>Election Committee</strong><br>
+                                    Malawi College of Health Sciences</p>
+                                </div>
+                            </div>";
+
+                        // Plain text body (for email clients that don't support HTML)
+                        $mail->AltBody = "MALAWI COLLEGE OF HEALTH SCIENCES\n"
+                                      . "Student Election Committee\n\n"
+                                      . "Dear " . $candidate['first_name'] . " " . $candidate['surname'] . ",\n\n"
+                                      . "Congratulations! Your nomination for the position of " . $candidate['role'] 
+                                      . " has been approved by the MCHS Election Committee.\n\n"
+                                      . "You are now officially a candidate for the upcoming MCHS Student Election.\n\n"
+                                      . "Best regards,\n"
+                                      . "Election Committee\n"
+                                      . "Malawi College of Health Sciences";
+
+                        $mail->send();
+                        $_SESSION['success'] = "Nomination approved successfully and notification email sent";
+                    } catch (Exception $e) {
+                        $_SESSION['success'] = "Nomination approved successfully but failed to send email notification";
+                        error_log("Failed to send email. Mailer Error: {$mail->ErrorInfo}");
+                    }
+
                     // Log the approval
                     $stmt = $conn->prepare("
                         INSERT INTO audit_logs (user_id, action, details, ip_address)
@@ -40,7 +115,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                         "Approved nomination ID: $nomination_id",
                         $_SERVER['REMOTE_ADDR']
                     ]);
-                    $_SESSION['success'] = "Nomination approved successfully";
                     break;
 
                 case 'reject':

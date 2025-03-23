@@ -131,8 +131,9 @@ function validateFileUpload($file, $allowedTypes, $maxSize) {
 }
 
 // Add this function at the top of your file after the validateFileUpload function
-function checkExistingUser($conn, $userId, $studentId, $email) {
-    $query = "SELECT user_id, student_id, email FROM nominations WHERE user_id = :user_id OR student_id = :student_id OR email = :email";
+function checkExistingUser($conn, $userId, $studentId, $email, $electionId) {
+    $query = "SELECT user_id, student_id, email, election_id FROM nominations 
+              WHERE user_id = :user_id OR student_id = :student_id OR email = :email";
     $stmt = $conn->prepare($query);
     $stmt->execute([
         ':user_id' => $userId,
@@ -143,14 +144,14 @@ function checkExistingUser($conn, $userId, $studentId, $email) {
     
     $errors = [];
     foreach ($result as $row) {
-        if ($row['user_id'] == $userId) {
-            $errors[] = "You have already submitted a nomination";
+        if ($row['user_id'] == $userId && $row['election_id'] == $electionId) {
+            $errors[] = "You have already submitted a nomination for this election.";
         }
         if ($row['student_id'] === $studentId) {
-            $errors[] = "Student ID already registered as a candidate";
+            $errors[] = "Student ID already registered as a candidate.";
         }
         if ($row['email'] === $email) {
-            $errors[] = "Email address already registered as a candidate";
+            $errors[] = "Email address already registered as a candidate.";
         }
     }
     
@@ -232,7 +233,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $conn,
                 $_SESSION['user_id'],
                 htmlspecialchars(trim($_POST['student_id'])), 
-                filter_var($_POST['email'], FILTER_SANITIZE_EMAIL)
+                filter_var($_POST['email'], FILTER_SANITIZE_EMAIL),
+                $_POST['election_id']
             );
             
             if (!empty($existingUserErrors)) {
