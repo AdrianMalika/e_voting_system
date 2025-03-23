@@ -104,7 +104,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
         </div>
-    </div>
 
     <!-- Form -->
     <div class="card shadow-sm">
