@@ -115,20 +115,7 @@
         <span>Apply</span>
     </a>
 </li>
-      <li class="nav-item">
-        <a class="nav-link <?php echo $current_page === 'vote.php' ? 'active' : ''; ?>" 
-           href="/e_voting_system/student/vote.php">
-          <i class="fas fa-check-square"></i>
-          <span>Vote</span>
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link <?php echo $current_page === 'view_results.php' ? 'active' : ''; ?>" 
-           href="/e_voting_system/student/view_results.php">
-          <i class="fas fa-chart-bar"></i>
-          <span>Results</span>
-        </a>
-      </li>
+     
     <?php endif; ?>
 
     <li class="nav-item mt-4">
