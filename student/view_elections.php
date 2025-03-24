@@ -61,7 +61,7 @@ error_log("User Branch: " . $userBranch);
                 <div class="col-md-6">
                     <div class="card shadow-sm h-100">
                         <div class="card-body">
-                            <h3 class="card-title"><?php echo htmlspecialchars($election['title']); ?></h3>
+                            <h3 class="card-title" style="color: #2c3e50;"><?php echo htmlspecialchars($election['title']); ?></h3>
                             <p class="text-muted">
                                 <i class="fas fa-calendar me-2"></i>
                                 <?php echo date('M j, Y', strtotime($election['start_date'])); ?> - 

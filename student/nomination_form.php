@@ -24,15 +24,22 @@ try {
             e.branch
         FROM election_positions ep
         JOIN elections e ON ep.election_id = e.id
-        WHERE e.status = 'upcoming'
+        WHERE e.status = 'active'
         AND e.branch = ?
         ORDER BY e.start_date ASC, ep.position_name ASC
     ");
     $stmt->execute([$userBranch]);
     $positions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // If no elections available for user's branch, show message and exit
+    // After fetching the user's branch
+    error_log("User Branch: " . $userBranch);
+
+    // After fetching positions
+    error_log("Positions fetched: " . print_r($positions, true));
+
+    // Check if there are any elections available for the user's branch
     if (empty($positions)) {
+        error_log("No elections available for branch: " . $userBranch);
         ?>
         <div class="container py-5">
             <div class="row justify-content-center">

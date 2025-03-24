@@ -135,31 +135,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="card-body">
                     <div class="row g-4">
                         <?php foreach ($position_candidates as $candidate): ?>
-                            <div class="col-md-4">
+                            <div class="col-md-12"> <!-- Keep the column full width -->
                                 <div class="card h-100">
-                                    <div class="position-relative">
-                                        <?php if ($candidate['photo_path']): ?>
-                                            <img src="<?php echo htmlspecialchars($candidate['photo_path']); ?>" 
-                                                 class="card-img-top candidate-photo" 
-                                                 alt="<?php echo htmlspecialchars($candidate['first_name'] . ' ' . $candidate['surname']); ?>">
-                                        <?php else: ?>
-                                            <div class="card-img-top candidate-photo-placeholder">
-                                                <i class="fas fa-user-circle fa-4x"></i>
+                                    <div class="card-body d-flex align-items-center justify-content-between"> <!-- Use flexbox for horizontal alignment -->
+                                        <div class="d-flex align-items-center me-3"> <!-- Container for image and name -->
+                                            <?php if ($candidate['photo_path']): ?>
+                                                <img src="<?php echo htmlspecialchars($candidate['photo_path']); ?>" 
+                                                     class="candidate-photo" 
+                                                     alt="<?php echo htmlspecialchars($candidate['first_name'] . ' ' . $candidate['surname']); ?>">
+                                            <?php else: ?>
+                                                <div class="candidate-photo-placeholder">
+                                                    <i class="fas fa-user-circle fa-4x"></i>
+                                                </div>
+                                            <?php endif; ?>
+                                            <div class="ms-3"> <!-- Margin start for spacing -->
+                                                <h5 class="card-title mb-1">
+                                                    <?php echo htmlspecialchars($candidate['first_name'] . ' ' . $candidate['surname']); ?>
+                                                </h5>
+                                                <button type="button" class="btn btn-link p-0" 
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#manifesto-<?php echo $candidate['nomination_id']; ?>">
+                                                    View Manifesto
+                                                </button>
                                             </div>
-                                        <?php endif; ?>
-                                    </div>
-                                    <div class="card-body">
-                                        <h5 class="card-title">
-                                            <?php echo htmlspecialchars($candidate['first_name'] . ' ' . $candidate['surname']); ?>
-                                        </h5>
-                                        <button type="button" class="btn btn-link p-0" 
-                                                data-bs-toggle="modal" 
-                                                data-bs-target="#manifesto-<?php echo $candidate['nomination_id']; ?>">
-                                            View Manifesto
-                                        </button>
-                                        
+                                        </div>
                                         <?php if (!in_array($position, $votedPositions)): ?>
-                                            <div class="form-check mt-3">
+                                            <div class="form-check"> <!-- Align vote option on the right -->
                                                 <input class="form-check-input" type="radio" 
                                                        name="votes[<?php echo htmlspecialchars($position); ?>]" 
                                                        value="<?php echo $candidate['nomination_id']; ?>" 
@@ -167,7 +168,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                                        required>
                                                 <label class="form-check-label" 
                                                        for="candidate-<?php echo $candidate['nomination_id']; ?>">
-                                                    Select Candidate
+                                                    Vote
                                                 </label>
                                             </div>
                                         <?php endif; ?>
@@ -216,12 +217,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <style>
 .candidate-photo {
-    height: 200px;
+    height: 120px;
+    width: auto;
     object-fit: cover;
 }
 
 .candidate-photo-placeholder {
-    height: 200px;
+    height: 120px;
     background-color: #f8f9fa;
     display: flex;
     align-items: center;
