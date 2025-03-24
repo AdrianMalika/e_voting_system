@@ -1,4 +1,5 @@
 <?php
+
 require_once '../includes/header.php';
 
 // Ensure user is logged in and is a student or candidate
@@ -31,15 +32,8 @@ try {
     $stmt->execute([$userBranch]);
     $positions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // After fetching the user's branch
-    error_log("User Branch: " . $userBranch);
-
-    // After fetching positions
-    error_log("Positions fetched: " . print_r($positions, true));
-
-    // Check if there are any elections available for the user's branch
+    // If no elections available for user's branch, show message and exit
     if (empty($positions)) {
-        error_log("No elections available for branch: " . $userBranch);
         ?>
         <div class="container py-5">
             <div class="row justify-content-center">
@@ -189,10 +183,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception("Please select an election");
         }
 
-        // Validate that the election exists and is upcoming
+
         $stmt = $conn->prepare("
             SELECT id FROM elections 
-            WHERE id = ? AND status = 'upcoming'
+            WHERE id = ? AND status = 'active'
         ");
         $stmt->execute([$_POST['election_id']]);
         if (!$stmt->fetch()) {

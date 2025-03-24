@@ -109,20 +109,20 @@ $nominees = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <!-- Position Tabs -->
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-body">
-                <ul class="nav nav-pills mb-4" id="positionTabs" role="tablist">
-                    <?php $first = true; foreach ($positions as $role => $roleNominees): ?>
-                    <li class="nav-item me-2" role="presentation">
-                        <button class="nav-link <?php echo $first ? 'active' : ''; ?>" 
-                                id="<?php echo sanitize_id($role); ?>-tab"
-                                data-bs-toggle="pill"
-                                data-bs-target="#<?php echo sanitize_id($role); ?>"
-                                type="button"
-                                role="tab">
-                            <?php echo htmlspecialchars($role); ?> 
-                            <span class="badge bg-primary ms-2"><?php echo count($roleNominees); ?></span>
-                        </button>
-                    </li>
-                    <?php $first = false; endforeach; ?>
+               <ul class="nav nav-pills mb-4" id="positionTabs" role="tablist">
+                    <?php foreach ($positions as $role => $roleNominees): ?>
+                        <li class="nav-item me-2" role="presentation">
+                            <button class="nav-link" 
+                                    id="<?php echo sanitize_id($role); ?>-tab"
+                                    data-bs-toggle="pill"
+                                    data-bs-target="#<?php echo sanitize_id($role); ?>"
+                                    type="button"
+                                    role="tab">
+                                <?php echo htmlspecialchars($role); ?> 
+                                <span class="badge bg-primary ms-2"><?php echo count($roleNominees); ?></span>
+                            </button>
+                        </li>
+                    <?php endforeach; ?>
                 </ul>
 
                 <div class="tab-content" id="positionTabContent">
@@ -251,7 +251,7 @@ function sanitize_id($string) {
 
 .hover-shadow:hover {
     transform: translateY(-5px);
-    box-shadow: 0 1rem 3rem rgba(0,0,0,.175)!important;
+    box-shadow: var(--primary-color);
 }
 
 .candidate-photo {
@@ -263,7 +263,7 @@ function sanitize_id($string) {
 
 .candidate-photo-placeholder {
     height: 250px;
-    background-color: #f8f9fa;
+    background-color:var(--primary-color);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -307,7 +307,45 @@ function sanitize_id($string) {
         font-size: 1rem;
     }
 }
+
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const electionSelect = document.getElementById('election_id');
+    const roleSelect = document.getElementById('role');
+
+    electionSelect.addEventListener('change', function() {
+        const selectedElection = this.value;
+        const positions = electionsData[selectedElection].positions;
+
+        // Clear previous options
+        roleSelect.innerHTML = '<option value="">Select Position</option>';
+
+        // Add positions
+        positions.forEach(position => {
+            const option = document.createElement('option');
+            option.value = position;
+            option.textContent = position;
+            roleSelect.appendChild(option);
+        });
+
+        // Enable the role select
+        roleSelect.disabled = false;
+
+        // Highlight selected position
+        const positionTabs = document.querySelectorAll('.nav-link');
+        positionTabs.forEach(tab => {
+            tab.classList.remove('inactive-position'); // Reset all to active
+            if (!positions.includes(tab.textContent.trim())) {
+                tab.classList.add('inactive-position'); // Add inactive class
+            } else {
+                tab.classList.remove('inactive-position'); // Ensure active position is not inactive
+            }
+        });
+    });
+});
+</script>
 
 <?php require_once '../includes/footer.php'; ?>

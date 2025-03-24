@@ -42,7 +42,7 @@ error_log("User Branch: " . $userBranch);
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
-                <h2 style="color: #2c3e50;"><i class="fas fa-vote-yea me-2"></i>Elections in <?php echo htmlspecialchars($userBranch); ?></h2>
+                <h2 class="text-custom-primary"><i class="fas fa-vote-yea me-2"></i>Elections in <?php echo htmlspecialchars($userBranch); ?></h2>
                 <a href="elections.php" class="btn btn-outline-primary">
                     <i class="fas fa-arrow-left me-2"></i>Back
                 </a>
@@ -61,7 +61,7 @@ error_log("User Branch: " . $userBranch);
                 <div class="col-md-6">
                     <div class="card shadow-sm h-100">
                         <div class="card-body">
-                            <h3 class="card-title" style="color: #2c3e50;"><?php echo htmlspecialchars($election['title']); ?></h3>
+                            <h3 class="card-title text-custom-primary"><?php echo htmlspecialchars($election['title']); ?></h3>
                             <p class="text-muted">
                                 <i class="fas fa-calendar me-2"></i>
                                 <?php echo date('M j, Y', strtotime($election['start_date'])); ?> - 
@@ -69,7 +69,7 @@ error_log("User Branch: " . $userBranch);
                             </p>
                             <p><?php echo htmlspecialchars($election['description']); ?></p>
                             <a href="vote.php?election_id=<?php echo $election['id']; ?>" 
-                               class="btn" style="background-color: #2c3e50; color: white;">
+                               class="btn btn-custom-primary">
                                 <i class="fas fa-check-circle me-2"></i>Vote Now
                             </a>
                         </div>
