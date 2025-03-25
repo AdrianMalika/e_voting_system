@@ -31,7 +31,7 @@ if (!$election) {
     exit();
 }
 
-// Check if user has already voted
+// Check if user has already voted for each position
 $stmt = $conn->prepare("
     SELECT DISTINCT position_name 
     FROM votes 
@@ -72,18 +72,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $conn->beginTransaction();
         
         // Validate one vote per position
-        foreach ($_POST['votes'] as $position => $candidate_id) {
-            if (in_array($position, $votedPositions)) {
-                throw new Exception("You have already voted for $position");
+        if (isset($_POST['votes'])) {
+            foreach ($_POST['votes'] as $position => $candidate_id) {
+                if (in_array($position, $votedPositions)) {
+                    throw new Exception("You have already voted for $position.");
+                }
+
+                // Insert vote
+                $stmt = $conn->prepare("
+                    INSERT INTO votes (election_id, position_name, candidate_id, voter_id, created_at)
+                    VALUES (?, ?, ?, ?, NOW())
+                ");
+                $stmt->execute([$election_id, $position, $candidate_id, $_SESSION['user_id']]);
+                $votedPositions[] = $position; // Add this position to the list of voted positions
             }
-            
-            $stmt = $conn->prepare("
-                INSERT INTO votes (election_id, position_name, candidate_id, voter_id, created_at)
-                VALUES (?, ?, ?, ?, NOW())
-            ");
-            $stmt->execute([$election_id, $position, $candidate_id, $_SESSION['user_id']]);
         }
-        
+
         $conn->commit();
         $_SESSION['success'] = "Your votes have been recorded successfully!";
         header("Location: view_elections.php?branch=" . $election['branch']);
@@ -224,13 +228,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             <?php endforeach; ?>
             <div class="mt-4">
-                <?php if (empty(array_intersect(array_keys($positions), $votedPositions))): ?>
-                    <button type="submit" class="vote-button">
-                        Submit Votes
-                    </button>
-                <?php else: ?>
-                    <div class="text-gray-500">You have already voted for all positions.</div>
-                <?php endif; ?>
+                <button type="submit" class="vote-button">
+                    Submit Votes
+                </button>
             </div>
         </form>
     </div>
@@ -249,6 +249,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         document.getElementById('manifestoText').innerText = manifesto;
         document.getElementById('manifestoModal').classList.remove('hidden');
     }
+
     function closeManifesto() {
         document.getElementById('manifestoModal').classList.add('hidden');
     }
