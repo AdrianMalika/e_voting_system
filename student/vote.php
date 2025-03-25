@@ -9,6 +9,10 @@ if (!isset($_SESSION['user_id']) || $user['role'] !== 'student') {
     exit();
 }
 
+// Initialize variables
+$election = null;
+$positions = [];
+
 // Get election ID
 $election_id = $_GET['election_id'] ?? 0;
 
@@ -36,7 +40,7 @@ $stmt = $conn->prepare("
 $stmt->execute([$election_id, $_SESSION['user_id']]);
 $votedPositions = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-// Get candidates grouped by position
+// Get candidates grouped by position (INCLUDING PROGRAM & YEAR OF STUDY)
 $stmt = $conn->prepare("
     SELECT 
         n.nomination_id,
@@ -45,7 +49,9 @@ $stmt = $conn->prepare("
         n.photo_path,
         n.manifesto,
         n.role as position_name,
-        n.branch
+        n.branch,
+        n.program,
+        n.year_of_study
     FROM nominations n
     WHERE n.election_id = ? 
     AND n.status = 'approved'
@@ -56,7 +62,6 @@ $stmt->execute([$election_id, $election['branch']]);
 $candidates = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Group candidates by position
-$positions = [];
 foreach ($candidates as $candidate) {
     $positions[$candidate['position_name']][] = $candidate;
 }
@@ -90,159 +95,163 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Election Voting</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        :root {
+            --custom-primary-color: #3498db; 
+            --custom-secondary-color: #2c3e50;
+        }
 
-<div class="container py-6">    
-    <!-- Election Header -->
-    <div class="card mb-4" style="background-color: #2c3e50; color: white;">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center">
+        /* Apply the colors */
+        .bg-custom-primary {
+            background-color: var(--custom-primary-color);
+        }
+
+        .bg-custom-secondary {
+            background-color: var(--custom-secondary-color);
+        }
+        .candidate-img {
+            width: 100px; 
+            height: 100px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 3px solid #4B6F44; /* Green border for better visibility */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .candidate-card {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease;
+        }
+        .candidate-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+        .candidate-info {
+            flex-grow: 1;
+        }
+        .candidate-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+        }
+        .candidate-details {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        .vote-button {
+            background-color: #4B6F44;
+            color: #fff;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .vote-button:hover {
+            background-color: #396F31;
+        }
+        .modal-content {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 10px;
+            width: 50%;
+            max-width: 500px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto py-6">
+        
+        <!-- Election Header -->
+        <div class="bg-custom-primary text-white mb-4 p-6 rounded-lg shadow-lg">
+            <div class="flex justify-between items-center">
                 <div>
-                    <h2 class="mb-1"><?php echo htmlspecialchars($election['title']); ?></h2>
-                    <p class="mb-0">
-                        <i class="fas fa-map-marker-alt me-2"></i><?php echo htmlspecialchars($election['branch']); ?> Branch
-                    </p>
+                    <h2 class="text-2xl font-bold mb-1"><?php echo htmlspecialchars($election['title']); ?></h2>
+                    <p class="text-lg"><i class="fas fa-map-marker-alt mr-2"></i><?php echo htmlspecialchars($election['branch']); ?> Branch</p>
                 </div>
                 <a href="view_elections.php?branch=<?php echo urlencode($election['branch']); ?>" 
-                   class="btn btn-light">
-                    <i class="fas fa-arrow-left me-2"></i>Back
+                   class="bg-custom-secondary text-white px-4 py-2 rounded-lg shadow hover:bg-gray-700 transition">
+                    <i class="fas fa-arrow-left mr-2"></i>Back
                 </a>
             </div>
         </div>
-    </div>
 
-    <?php if (isset($_SESSION['error'])): ?>
-        <div class="alert alert-danger">
-            <?php 
-            echo $_SESSION['error'];
-            unset($_SESSION['error']);
-            ?>
-        </div>
-    <?php endif; ?>
-
-    <form method="POST" id="voteForm">
-        <?php foreach ($positions as $position => $position_candidates): ?>
-            <div class="card mb-4">
-                <div class="card-header bg-light">
-                    <h3 class="mb-0">
-                        <?php echo htmlspecialchars($position); ?>
-                        <?php if (in_array($position, $votedPositions)): ?>
-                            <span class="badge bg-success ms-2">
-                                <i class="fas fa-check me-1"></i>Voted
-                            </span>
-                        <?php endif; ?>
-                    </h3>
-                </div>
-                <div class="card-body">
-                    <div class="row g-4">
-                        <?php foreach ($position_candidates as $candidate): ?>
-                            <div class="col-md-12"> <!-- Keep the column full width -->
-                                <div class="card h-100">
-                                    <div class="card-body d-flex align-items-center justify-content-between"> <!-- Use flexbox for horizontal alignment -->
-                                        <div class="d-flex align-items-center me-3"> <!-- Container for image and name -->
-                                            <?php if ($candidate['photo_path']): ?>
-                                                <img src="<?php echo htmlspecialchars($candidate['photo_path']); ?>" 
-                                                     class="candidate-photo" 
-                                                     alt="<?php echo htmlspecialchars($candidate['first_name'] . ' ' . $candidate['surname']); ?>">
-                                            <?php else: ?>
-                                                <div class="candidate-photo-placeholder">
-                                                    <i class="fas fa-user-circle fa-4x"></i>
-                                                </div>
-                                            <?php endif; ?>
-                                            <div class="ms-3"> <!-- Margin start for spacing -->
-                                                <h5 class="card-title mb-1">
-                                                    <?php echo htmlspecialchars($candidate['first_name'] . ' ' . $candidate['surname']); ?>
-                                                </h5>
-                                                <button type="button" class="btn btn-link p-0" 
-                                                        data-bs-toggle="modal" 
-                                                        data-bs-target="#manifesto-<?php echo $candidate['nomination_id']; ?>">
-                                                    View Manifesto
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <?php if (!in_array($position, $votedPositions)): ?>
-                                            <div class="form-check"> <!-- Align vote option on the right -->
-                                                <input class="form-check-input" type="radio" 
-                                                       name="votes[<?php echo htmlspecialchars($position); ?>]" 
-                                                       value="<?php echo $candidate['nomination_id']; ?>" 
-                                                       id="candidate-<?php echo $candidate['nomination_id']; ?>"
-                                                       required>
-                                                <label class="form-check-label" 
-                                                       for="candidate-<?php echo $candidate['nomination_id']; ?>">
-                                                    Vote
-                                                </label>
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-            </div>
-        <?php endforeach; ?>
-
-        <?php if (!empty(array_diff(array_keys($positions), $votedPositions))): ?>
-            <div class="d-grid gap-2">
-                <button type="submit" class="btn" style="background-color: #2c3e50; color: white;">
-                    <i class="fas fa-vote-yea me-2"></i>Submit Votes
-                </button>
-            </div>
-        <?php else: ?>
-            <div class="alert alert-success text-center">
-                <i class="fas fa-check-circle me-2"></i>
-                You have voted for all positions in this election.
+        <?php if (isset($_SESSION['error'])): ?>
+            <div class="bg-red-600 text-white p-4 rounded-lg mb-4 text-center">
+                <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
             </div>
         <?php endif; ?>
-    </form>
-</div>
 
-<!-- Manifesto Modals -->
-<?php foreach ($candidates as $candidate): ?>
-    <div class="modal fade" id="manifesto-<?php echo $candidate['nomination_id']; ?>" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <?php echo htmlspecialchars($candidate['first_name'] . ' ' . $candidate['surname']); ?>'s Manifesto
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <form method="POST" id="voteForm">
+            <?php foreach ($positions as $position => $position_candidates): ?>
+                <div class="border border-gray-300 mb-4 rounded-lg shadow-lg">
+                    <div class="bg-gray-100 p-4 rounded-t-lg">
+                        <h3 class="text-xl font-semibold"><?php echo htmlspecialchars($position); ?></h3>
+                    </div>
+                    <div class="p-4">
+                        <div class="grid grid-cols-1 gap-6">
+                            <?php foreach ($position_candidates as $candidate): ?>
+                                <div class="candidate-card p-4 flex items-center justify-between mb-4">
+                                    <div class="flex items-center">
+                                        <img src="<?php echo htmlspecialchars($candidate['photo_path']); ?>" alt="Candidate Photo" class="candidate-img mr-4">
+                                        <div class="candidate-info">
+                                            <h5 class="candidate-name"><?php echo htmlspecialchars($candidate['first_name'] . ' ' . $candidate['surname']); ?></h5>
+                                            <p class="candidate-details">Program: <?php echo htmlspecialchars($candidate['program']); ?></p>
+                                            <p class="candidate-details">Year of Study: <?php echo htmlspecialchars($candidate['year_of_study']); ?></p>
+                                            <button type="button" class="text-blue-600 underline" onclick="viewManifesto('<?php echo htmlspecialchars(addslashes($candidate['manifesto'])); ?>')">View Manifesto</button>
+                                        </div>
+                                    </div>
+                                    <?php if (in_array($position, $votedPositions)): ?>
+                                        <div class="text-gray-500">You have voted for this position.</div>
+                                    <?php else: ?>
+                                        <div>
+                                            <input type="radio" name="votes[<?php echo htmlspecialchars($position); ?>]" value="<?php echo $candidate['nomination_id']; ?>" class="mr-2">
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <?php echo nl2br(htmlspecialchars($candidate['manifesto'])); ?>
-                </div>
+            <?php endforeach; ?>
+            <div class="mt-4">
+                <?php if (empty(array_intersect(array_keys($positions), $votedPositions))): ?>
+                    <button type="submit" class="vote-button">
+                        Submit Votes
+                    </button>
+                <?php else: ?>
+                    <div class="text-gray-500">You have already voted for all positions.</div>
+                <?php endif; ?>
             </div>
+        </form>
+    </div>
+
+    <!-- Modal for Viewing Manifesto -->
+    <div id="manifestoModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex justify-center items-center">
+        <div class="modal-content">
+            <h3 class="text-xl font-semibold mb-4">Candidate Manifesto</h3>
+            <p id="manifestoText"></p>
+            <button class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg" onclick="closeManifesto()">Close</button>
         </div>
     </div>
-<?php endforeach; ?>
 
-<style>
-.candidate-photo {
-    height: 120px;
-    width: auto;
-    object-fit: cover;
-}
-
-.candidate-photo-placeholder {
-    height: 120px;
-    background-color: #f8f9fa;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.form-check-input:checked {
-    background-color: #198754;
-    border-color: #198754;
-}
-</style>
-
-<script>
-document.getElementById('voteForm').addEventListener('submit', function(e) {
-    if (!confirm('Are you sure you want to submit your votes? This action cannot be undone.')) {
-        e.preventDefault();
+    <script>
+    function viewManifesto(manifesto) {
+        document.getElementById('manifestoText').innerText = manifesto;
+        document.getElementById('manifestoModal').classList.remove('hidden');
     }
-});
-</script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-
-<?php require_once '../includes/footer.php'; ?>
+    function closeManifesto() {
+        document.getElementById('manifestoModal').classList.add('hidden');
+    }
+    </script>
+</body>
+</html>

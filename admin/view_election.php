@@ -52,45 +52,64 @@ $stmt = $conn->prepare("
 ");
 $stmt->execute([$election_id, $election_id]);
 $nominees = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Get voting statistics
+$stmt = $conn->prepare("
+    SELECT 
+        n.nomination_id,
+        n.first_name,
+        n.surname,
+        COUNT(v.candidate_id) AS vote_count
+    FROM nominations n
+    LEFT JOIN votes v ON n.nomination_id = v.candidate_id AND n.election_id = v.election_id
+    WHERE n.election_id = ?
+    GROUP BY n.nomination_id
+    ORDER BY vote_count DESC
+");
+$stmt->execute([$election_id]);
+$statistics = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <div class="container-fluid py-4">
     <!-- Enhanced Header -->
-   <!-- Enhanced Header -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card bg-gradient-primary text-white shadow-lg rounded-4 border-0">
-            <div class="card-body p-4">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h2 class="display-6 mb-2"><?php echo htmlspecialchars($election['title']); ?></h2>
-                        <div class="d-flex gap-4">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-building me-2"></i>
-                                <span><?php echo htmlspecialchars($election['branch']); ?> Branch</span>
-    </div>
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-users me-2"></i>
-                                <span><?php echo count($nominees); ?> Candidates</span>
-        </div>
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-calendar me-2"></i>
-                                <span><?php echo date('M j, Y', strtotime($election['start_date'])); ?> - <?php echo date('M j, Y', strtotime($election['end_date'])); ?></span>
-        </div>
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-clock me-2"></i>
-                                <span><?php echo ucfirst($election['status']); ?></span>
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-gradient-primary text-white shadow-lg rounded-4 border-0">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="display-6 mb-2"><?php echo htmlspecialchars($election['title']); ?></h2>
+                            <div class="d-flex gap-4">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-building me-2"></i>
+                                    <span><?php echo htmlspecialchars($election['branch']); ?> Branch</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-users me-2"></i>
+                                    <span><?php echo count($nominees); ?> Candidates</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-calendar me-2"></i>
+                                    <span><?php echo date('M j, Y', strtotime($election['start_date'])); ?> - <?php echo date('M j, Y', strtotime($election['end_date'])); ?></span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-clock me-2"></i>
+                                    <span><?php echo ucfirst($election['status']); ?></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <a href="view_statistics.php?election_id=<?php echo urlencode($election_id); ?>" class="btn btn-light btn-lg rounded-pill">
+                                <i class="fas fa-chart-bar me-2"></i>View Statistics
+                            </a>
+                            <a href="manage_elections.php" class="btn btn-light btn-lg rounded-pill">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Elections
+                            </a>
+                        </div>
                     </div>
-                </div>
-                    </div>
-                    <a href="manage_elections.php" class="btn btn-light btn-lg rounded-pill">
-                        <i class="fas fa-arrow-left me-2"></i>Back to Elections
-                    </a>
                 </div>
             </div>
         </div>
-    </div>
-</div>
     </div>
 
     <!-- Candidates Section -->
