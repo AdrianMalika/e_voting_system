@@ -103,8 +103,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .login-container {
-            max-width: 850px;
-            max-height: 480px;
+            max-width: 900px;
+            max-height: 520px;
             margin: 20px auto;
             display: flex;
             flex-direction: row;
@@ -446,7 +446,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         .login-form {
             flex: 1.1;
-            padding: 15px 30px;
+            padding: 20px 35px;
             display: flex;
             flex-direction: column;
             background: white;
@@ -500,7 +500,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .role-option {
             text-align: center;
             cursor: pointer;
-            padding: 11px;
+            padding: 13px;
             border-radius: 15px;
             transition: all 0.3s;
             border: 2px solid transparent;
@@ -535,7 +535,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .role-option i {
-            font-size: 21px;
+            font-size: 23px;
             margin-bottom: 6px;
             color: var(--primary-color);
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -557,8 +557,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .form-control {
-            height: 45px;
-            font-size: 1rem;
+            height: 48px;
+            font-size: 1.1rem;
             padding: 8px 20px 8px 45px;
             border-radius: 12px;
             border: 2px solid #eee;
@@ -651,16 +651,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             width: 100% !important;
             background: rgb(0, 32, 63) !important;
             border: none;
-            padding: 15px;
-            border-radius: 10px;
+            padding: 6px;
+            border-radius: 6px;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 1px;
             position: relative;
             overflow: hidden;
             transition: all 0.3s;
-            margin-top: 25px;
-            font-size: 0.95rem;
+            margin: 15px auto 0;
+            font-size: 0.85rem;
+            line-height: 1;
+        }
+
+        .btn-primary i {
+            font-size: 0.8rem;
         }
 
         .btn-primary:hover {
@@ -1715,6 +1720,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 width: 120px;
                 height: 120px;
             }
+        }
+
+        /* Add this to ensure button is centered */
+        .d-grid {
+            display: flex !important;
+            justify-content: center;
         }
     </style>
 </head>
