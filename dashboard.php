@@ -5,7 +5,7 @@ if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
-
+//i have modified it
 
 $stmt = $conn->prepare("
     SELECT e.*, 
